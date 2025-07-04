@@ -1,0 +1,163 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# AI Influencer Platform - Cursor Rules
+
+## Project Structure Overview
+
+This is a monorepo containing:
+- **Smart Contracts**: Solidity contracts with Hardhat 3
+- **Next.js Frontend**: React application with TypeScript
+- **Database**: SQLite with Prisma ORM
+
+## Folder Structure
+
+```
+avaapp/
+├── contracts/                    # Smart contracts (root level)
+│   ├── CharacterPaymentRouter.sol
+│   ├── hardhat.config.ts
+│   └── package.json
+├── ignition/                     # Hardhat deployment modules
+│   └── modules/
+│       └── CharacterPaymentRouter.ts
+├── next-app/                     # Next.js frontend application
+│   ├── src/
+│   │   ├── app/                  # Next.js App Router
+│   │   │   ├── api/              # API routes
+│   │   │   │   ├── auth/         # Authentication endpoints
+│   │   │   │   │   ├── status/
+│   │   │   │   │   └── logout/
+│   │   │   │   ├── characters/   # Character management
+│   │   │   │   ├── complete-siwe/
+│   │   │   │   └── nonce/
+│   │   │   ├── globals.css
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── components/           # React components
+│   │   │   ├── CharacterCreator.tsx
+│   │   │   ├── CharacterList.tsx
+│   │   │   └── LoginButton.tsx
+│   │   └── lib/                  # Utilities
+│   │       └── prisma.ts
+│   ├── prisma/                   # Database schema
+│   │   └── schema.prisma
+│   ├── package.json
+│   └── tsconfig.json
+└── README.md
+```
+
+## File Path Conventions
+
+### Smart Contracts
+- **Location**: `contracts/` (root level)
+- **Naming**: PascalCase with `.sol` extension
+- **Examples**: `CharacterPaymentRouter.sol`
+
+### Next.js Frontend
+- **Location**: `next-app/src/`
+- **Components**: `next-app/src/components/`
+- **API Routes**: `next-app/src/app/api/`
+- **Pages**: `next-app/src/app/`
+- **Utilities**: `next-app/src/lib/`
+
+### Database
+- **Schema**: `next-app/prisma/schema.prisma`
+- **Client**: `next-app/src/lib/prisma.ts`
+
+### Deployment
+- **Ignition Modules**: `ignition/modules/`
+- **Hardhat Config**: `contracts/hardhat.config.ts`
+
+## Coding Conventions
+
+### Smart Contracts
+- Use Solidity ^0.8.20
+- Follow OpenZeppelin patterns
+- Include comprehensive NatSpec documentation
+- Use events for important state changes
+
+### Next.js Components
+- Use TypeScript with strict mode
+- Use 'use client' directive for client components
+- Follow React hooks patterns
+- Use Tailwind CSS for styling
+
+### API Routes
+- Use Next.js App Router API routes
+- Include proper error handling
+- Use TypeScript interfaces for request/response types
+- Follow RESTful conventions
+
+### Database
+- Use Prisma ORM
+- Define clear relationships
+- Use descriptive field names
+- Include proper indexes
+
+## Common Commands
+
+### Smart Contracts
+```bash
+# From root directory
+npx hardhat compile
+npx hardhat test
+npx hardhat ignition deploy ignition/modules/CharacterPaymentRouter.ts
+```
+
+### Next.js Frontend
+```bash
+# From next-app directory
+npm run dev
+npm run build
+npx prisma generate
+npx prisma db push
+```
+
+## Important Notes
+
+1. **Always check the current working directory** before creating or editing files
+2. **Smart contracts** are in the root `contracts/` folder, not inside `next-app/`
+3. **Next.js files** are in `next-app/src/` with specific subdirectories
+4. **Database operations** are handled through Prisma in the `next-app/` directory
+5. **Deployment modules** are in the root `ignition/` folder
+
+## File Creation Guidelines
+
+When creating new files, follow these paths:
+
+- **New smart contract**: `contracts/ContractName.sol`
+- **New React component**: `next-app/src/components/ComponentName.tsx`
+- **New API route**: `next-app/src/app/api/route-name/route.ts`
+- **New page**: `next-app/src/app/page-name/page.tsx`
+- **New utility**: `next-app/src/lib/utilityName.ts`
+- **New deployment module**: `ignition/modules/ModuleName.ts`
+
+## Dependencies
+
+- **Smart Contracts**: @openzeppelin/contracts, hardhat
+- **Frontend**: @worldcoin/minikit-js, prisma, @prisma/client, siwe
+- **UI**: tailwindcss, next.js, react, typescript
+
+## Authentication Flow
+
+The app uses World App authentication:
+1. Generate nonce (`/api/nonce`)
+2. Sign with World App (`walletAuth`)
+3. Verify SIWE (`/api/complete-siwe`)
+4. Set session cookie
+5. Check auth status (`/api/auth/status`)
+
+## Database Models
+
+- **User**: walletAddress, characters (one-to-many)
+- **AICharacter**: name, systemPrompt, imageUrl, pricing fields, contractAddress
+
+## Smart Contract Features
+
+- **CharacterPaymentRouter**: Handles payments per character
+- **Platform fees**: 15% automatic collection
+- **Services**: exclusive content, chat, voice, brand promotions
+- **Security**: ReentrancyGuard, Ownable patterns 

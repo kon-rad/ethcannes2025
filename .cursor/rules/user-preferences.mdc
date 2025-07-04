@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+## CRITICAL RULE: Command Execution
+
+**NEVER run any terminal commands automatically.** Instead:
+1. Show the command to the user
+2. Explain what the command does
+3. Let the user decide whether to run it
+4. Only proceed after the user confirms they've run the command
+
+Example:
+```bash
+# Run this command to install dependencies:
+npm install wagmi viem @wagmi/core
+
+# Run this command to start the development server:
+npm run dev
+```
+
+This ensures the user maintains full control over their system and can review commands before execution. 
