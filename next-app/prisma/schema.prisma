@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  walletAddress String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  characters    AICharacter[]
+  chatMessages  ChatMessage[]
+  posts         Post[]
+  
+  @@map("users")
+}
+
+model AICharacter {
+  id                     String       @id @default(cuid())
+  name                   String
+  description            String
+  systemPrompt           String
+  imageUrl               String?
+  contractAddress        String? // Deployed smart contract address
+  consultationCallPrice  String? // Price per minute in cents (0 for free)
+  sponsorshipReelPrice   String? // Price for sponsorship reel in wei
+  exclusiveContentPrice  String? // Price in wei
+  chatPrice              String? // Price per message in wei
+  voicePrice             String? // Price per minute in wei
+  brandPromoPrice        String? // Price for brand promotions in wei
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  userId                 String
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatMessages           ChatMessage[]
+  posts                  Post[]
+  
+  @@map("ai_characters")
+}
+
+model ChatMessage {
+  id            String       @id @default(cuid())
+  content       String
+  role          String       // "user" or "assistant"
+  createdAt     DateTime     @default(now())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characterId   String
+  character     AICharacter  @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  
+  @@map("chat_messages")
+}
+
+model Post {
+  id          String       @id @default(cuid())
+  type        String       // "image", "text", "video", etc.
+  content     String?      // Text content for text posts
+  imageUrl    String?      // Image URL for image posts
+  title       String?      // Optional title for the post
+  description String?      // Optional description
+  prompt      String?      // Image generation prompt for debugging
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characterId String?
+  character   AICharacter? @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  
+  @@map("posts")
+} 
