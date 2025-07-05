@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       serviceType,
       price,
       recipientAddress: '0x5f80c3F3f6b6D9744eC1c2b0FA912CD0007B825B', // Hardcoded for testing
-      description: `Payment for ${serviceType} from ${character.name}`
+      description: `Tip for ${character.name}`
     })
 
   } catch (error) {

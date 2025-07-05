@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import WagmiProvider from '@/components/WagmiProvider'
-import Header from '@/components/Header'
 import { MiniKitProvider } from '@worldcoin/minikit-js/minikit-provider'
 import ErudaDebugger from '@/components/ErudaDebugger'
+import AppWrapper from '@/components/AppWrapper'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,7 +51,9 @@ export default function RootLayout({
       >
         <MiniKitProvider>
           <WagmiProvider>
-            {children}
+            <AppWrapper>
+              {children}
+            </AppWrapper>
           </WagmiProvider>
         </MiniKitProvider>
       </body>

@@ -49,6 +49,12 @@ avaapp/
 └── README.md
 ```
 
+
+# services
+
+s3 upload in services/s3.service.ts
+
+
 ## File Path Conventions
 
 ### Smart Contracts

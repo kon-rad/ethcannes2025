@@ -210,7 +210,7 @@ export default function EditCharacter() {
           <div className="text-[#EF4444] text-lg mb-4">{error}</div>
           <button
             onClick={() => router.push('/')}
-            className="btn-primary"
+            className="btn-cyberpunk-accent"
           >
             Go Back Home
           </button>
@@ -382,7 +382,7 @@ export default function EditCharacter() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 btn-primary flex items-center justify-center space-x-2"
+                className="flex-1 btn-cyberpunk-accent flex items-center justify-center space-x-2"
               >
                 {isSaving ? (
                   <>

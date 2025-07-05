@@ -57,12 +57,11 @@ export default function CharacterList() {
 
   return (
     <div className="px-2 sm:px-0">
-      <h2 className="text-2xl sm:text-3xl font-bold text-[#1F2937] mb-6 sm:mb-8">Your AI Characters</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-2">
         {characters.map((character) => (
           <div
             key={character.id}
-            className="bg-[#F8F9FA] backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-[#9CA3AF]/20 hover:border-[#9CA3AF]/40 transition-all duration-200"
+            className="bg-[#F8F9FA] backdrop-blur-lg rounded-xl p-2 sm:p-6 border border-[#9CA3AF]/20 hover:border-[#9CA3AF]/40 transition-all duration-200"
           >
             {character.imageUrl && (
               <div className="w-full h-40 sm:h-48 bg-[#9CA3AF]/20 rounded-lg mb-4 flex items-center justify-center">
@@ -87,7 +86,7 @@ export default function CharacterList() {
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 <button 
                   onClick={() => window.location.href = `/character/${character.id}`}
-                  className=" btn-sm flex items-center justify-center space-x-1"
+                  className="btn-cyberpunk btn-sm flex items-center justify-center space-x-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -96,7 +95,7 @@ export default function CharacterList() {
                 </button>
                 <button 
                   onClick={() => window.location.href = `/character/${character.id}/edit`}
-                  className="btn-secondary btn-sm"
+                  className="btn-cyberpunk-secondary btn-sm"
                 >
                   Manage
                 </button>

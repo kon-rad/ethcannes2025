@@ -21,6 +21,7 @@ interface Character {
   brandPromoPrice: number
   contractAddress?: string
   createdAt: string
+  userId: string
   user: {
     walletAddress: string
   }
@@ -43,7 +44,7 @@ export default function CharacterManagement() {
     description: '',
     systemPrompt: '',
     ownerWalletAddress: '',
-    exclusiveContentPrice: 0.01,
+    exclusiveContentPrice: 0.5,
     chatPricePerMessage: 0.001,
     voicePricePerMinute: 0.01,
     brandPromoPrice: 0.05
@@ -62,10 +63,10 @@ export default function CharacterManagement() {
   }, [])
 
   useEffect(() => {
-    if (params.id) {
+    if (params.id && user) {
       fetchCharacter()
     }
-  }, [params.id])
+  }, [params.id, user])
 
   useEffect(() => {
     const fetchWLDPrice = async () => {
@@ -107,6 +108,8 @@ export default function CharacterManagement() {
         // Check if current user is the owner
         if (user && data.userId === user.id) {
           setIsOwner(true)
+        } else {
+          setIsOwner(false)
         }
       } else {
         setError('Character not found')
@@ -176,8 +179,8 @@ export default function CharacterManagement() {
     }
   }
 
-  const payForExclusiveContent = async () => {
-    if (!character || !user) return
+  const tipCreator = async () => {
+    if (!character) return
 
     setProcessingPayment(true)
     try {
@@ -239,7 +242,7 @@ export default function CharacterManagement() {
         console.log('Backend confirmation response:', confirmation)
         
         if (confirmation.success) {
-          alert('Payment successful! You now have access to exclusive content.')
+          alert('Tip sent successfully! Thank you for supporting the creator.')
           // TODO: Update UI to show exclusive content
         } else {
           throw new Error(confirmation.error || 'Payment confirmation failed')
@@ -258,7 +261,7 @@ export default function CharacterManagement() {
         fullError: error
       })
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      alert(`Payment failed: ${errorMessage}`)
+      alert(`Tip failed: ${errorMessage}`)
     } finally {
       setProcessingPayment(false)
     }
@@ -291,7 +294,7 @@ export default function CharacterManagement() {
       description: '',
       systemPrompt: '',
       ownerWalletAddress: '',
-      exclusiveContentPrice: 0.01,
+      exclusiveContentPrice: 0.5,
       chatPricePerMessage: 0.001,
       voicePricePerMinute: 0.01,
       brandPromoPrice: 0.05
@@ -416,7 +419,7 @@ export default function CharacterManagement() {
               {isOwner && !isEditingCharacter && (
                               <button
                 onClick={startEditing}
-                className="btn-primary flex items-center justify-center space-x-2"
+                className="btn-cyberpunk-accent flex items-center justify-center space-x-2"
               >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -506,29 +509,8 @@ export default function CharacterManagement() {
           {/* Image Generation Section - Owner Only */}
           {isOwner && !isEditingCharacter && (
             <div className="mb-6 sm:mb-8">
-              <h3 className="text-lg sm:text-xl font-semibold text-[#1F2937] mb-4">
-                Generate Image Posts
-              </h3>
+              
               <div className="space-y-4">
-                <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
-                  <p className="text-[#1F2937] text-xs sm:text-sm">
-                    📸 <strong>Image Posts:</strong> Generate images that will be saved as posts in your character's feed. This does NOT change your character's avatar/profile image.
-                  </p>
-                </div>
-                {character.imageUrl && (
-                  <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
-                    <p className="text-[#1F2937] text-xs sm:text-sm">
-                      💡 <strong>FLUX.1 Kontext Mode:</strong> This will use your existing image as a reference to generate a new variation. If FLUX.1 Kontext fails, it will automatically fallback to FLUX.1 Dev.
-                    </p>
-                  </div>
-                )}
-                {!character.imageUrl && (
-                  <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
-                    <p className="text-[#1F2937] text-xs sm:text-sm">
-                      🎨 <strong>Initial Generation:</strong> Creating your first character image using FLUX.1 Dev.
-                    </p>
-                  </div>
-                )}
                 <div>
                   <label className="block text-sm font-medium text-[#1F2937] mb-2">
                     Image Prompt (Optional)
@@ -548,7 +530,7 @@ export default function CharacterManagement() {
                 <button
                   onClick={generateNewImage}
                   disabled={generatingImage}
-                  className="w-full sm:w-auto btn-primary flex items-center justify-center space-x-2"
+                  className="w-full sm:w-auto btn-cyberpunk flex items-center justify-center space-x-2"
                 >
                   {generatingImage ? (
                     <>
@@ -569,7 +551,7 @@ export default function CharacterManagement() {
                 <div className="mt-4">
                   <button
                     onClick={() => router.push(`/character/${params.id}/chat`)}
-                    className="w-full sm:w-auto btn-secondary flex items-center justify-center space-x-2"
+                    className="w-full sm:w-auto btn-cyberpunk-accent flex items-center justify-center space-x-2"
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -578,39 +560,7 @@ export default function CharacterManagement() {
                   </button>
                 </div>
 
-                {/* Exclusive Content Payment Button - Owner Only */}
-                <div className="mt-4">
-                  <button
-                    onClick={payForExclusiveContent}
-                    disabled={processingPayment}
-                    className="w-full sm:w-auto bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-[#6B7280] text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
-                  >
-                    {processingPayment ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Processing Payment...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>
-                          Pay {character.exclusiveContentPrice} WLD 
-                          {wldPriceUSD && (
-                            <span className="text-xs opacity-75">
-                              {' '}(~${(character.exclusiveContentPrice * wldPriceUSD).toFixed(2)} USD)
-                            </span>
-                          )}
-                          {' '}for Exclusive Content
-                        </span>
-                      </>
-                    )}
-                  </button>
-                  <p className="text-[#6B7280] text-xs mt-1">
-                    Get access to premium content and features from {character.name}
-                  </p>
-                </div>
+
               </div>
             </div>
           )}
@@ -625,7 +575,7 @@ export default function CharacterManagement() {
               <div className="mt-4">
                 <button
                   onClick={() => router.push(`/character/${params.id}/chat`)}
-                  className="w-full btn-primary flex items-center justify-center space-x-2"
+                  className="w-full btn-cyberpunk-accent flex items-center justify-center space-x-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -633,6 +583,46 @@ export default function CharacterManagement() {
                   <span>Chat with {character.name}</span>
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tip Creator Section - Available to All Users */}
+        {!isEditingCharacter && (
+          <div className="mb-6 sm:mb-8">
+            <div className="p-4 bg-[#F3F4F6] rounded-lg">
+              <h3 className="text-lg font-semibold text-[#1F2937] mb-4">Support {character.name}</h3>
+              <p className="text-[#374151] text-sm mb-4">
+                Show your appreciation and support the creator with a tip
+              </p>
+              
+              <button
+                onClick={tipCreator}
+                disabled={processingPayment}
+                className="w-full sm:w-auto btn-cyberpunk-secondary flex items-center justify-center space-x-2 text-sm sm:text-base"
+              >
+                {processingPayment ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Processing Tip...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>
+                      Tip {character.exclusiveContentPrice} WLD 
+                      {wldPriceUSD && (
+                        <span className="text-xs opacity-75">
+                          {' '}(~${(character.exclusiveContentPrice * wldPriceUSD).toFixed(2)} USD)
+                        </span>
+                      )}
+                      {' '}to Support Creator
+                    </span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         )}
@@ -684,14 +674,14 @@ export default function CharacterManagement() {
                 </p>
               </div>
 
-              {/* Pricing Section */}
+              {/* Pricing Configuration */}
               <div className="border-t pt-6">
-                <h4 className="text-lg font-medium text-[#1F2937] mb-4">Pricing (WLD)</h4>
+                <h4 className="text-lg font-medium text-[#1F2937] mb-4">Pricing Configuration (WLD)</h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#1F2937] mb-2">
-                      Exclusive Content Price
+                      Tip Amount
                     </label>
                     <input
                       type="number"
@@ -700,73 +690,21 @@ export default function CharacterManagement() {
                       value={editFormData.exclusiveContentPrice}
                       onChange={(e) => setEditFormData(prev => ({ ...prev, exclusiveContentPrice: parseFloat(e.target.value) || 0 }))}
                       className="w-full px-3 sm:px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280] text-sm sm:text-base"
-                      placeholder="0.01"
+                      placeholder="0.5"
                     />
                     <p className="text-[#6B7280] text-xs mt-1">
-                      Price for exclusive content access {formatUSDEquivalent(editFormData.exclusiveContentPrice)}
+                      Default tip amount for supporting the creator {formatUSDEquivalent(editFormData.exclusiveContentPrice)}
                     </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#1F2937] mb-2">
-                      Chat Price per Message
-                    </label>
-                    <input
-                      type="number"
-                      step="0.001"
-                      min="0"
-                      value={editFormData.chatPricePerMessage}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, chatPricePerMessage: parseFloat(e.target.value) || 0 }))}
-                      className="w-full px-3 sm:px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280] text-sm sm:text-base"
-                      placeholder="0.001"
-                    />
-                    <p className="text-[#6B7280] text-xs mt-1">
-                      Price per chat message {formatUSDEquivalent(editFormData.chatPricePerMessage)}
-                    </p>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#1F2937] mb-2">
-                      Voice Price per Minute
-                    </label>
-                    <input
-                      type="number"
-                      step="0.001"
-                      min="0"
-                      value={editFormData.voicePricePerMinute}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, voicePricePerMinute: parseFloat(e.target.value) || 0 }))}
-                      className="w-full px-3 sm:px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280] text-sm sm:text-base"
-                      placeholder="0.01"
-                    />
-                    <p className="text-[#6B7280] text-xs mt-1">
-                      Price per minute for voice calls {formatUSDEquivalent(editFormData.voicePricePerMinute)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[#1F2937] mb-2">
-                      Brand Promotion Price
-                    </label>
-                    <input
-                      type="number"
-                      step="0.001"
-                      min="0"
-                      value={editFormData.brandPromoPrice}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, brandPromoPrice: parseFloat(e.target.value) || 0 }))}
-                      className="w-full px-3 sm:px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280] text-sm sm:text-base"
-                      placeholder="0.05"
-                    />
-                    <p className="text-[#6B7280] text-xs mt-1">
-                      Price for brand promotions {formatUSDEquivalent(editFormData.brandPromoPrice)}
-                    </p>
-                  </div>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={saveCharacter}
-                  className="bg-[#059669] hover:bg-[#047857] text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+                  className="btn-cyberpunk-accent flex items-center justify-center space-x-2 text-sm sm:text-base"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -779,28 +717,6 @@ export default function CharacterManagement() {
                 >
                   Cancel
                 </button>
-              </div>
-            </div>
-          )}
-
-
-
-
-
-          {/* Statistics */}
-          {!isEditingCharacter && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-              <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg text-center">
-                <h4 className="text-base sm:text-lg font-medium text-[#1F2937] mb-2">Total Revenue</h4>
-                <p className="text-xl sm:text-2xl font-bold text-[#059669]">0 ETH</p>
-              </div>
-              <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg text-center">
-                <h4 className="text-base sm:text-lg font-medium text-[#1F2937] mb-2">Consultation Calls</h4>
-                <p className="text-xl sm:text-2xl font-bold text-[#3B82F6]">0</p>
-              </div>
-              <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg text-center">
-                <h4 className="text-base sm:text-lg font-medium text-[#1F2937] mb-2">Sponsorship Reels</h4>
-                <p className="text-xl sm:text-2xl font-bold text-[#8B5CF6]">0</p>
               </div>
             </div>
           )}

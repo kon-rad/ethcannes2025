@@ -83,6 +83,16 @@ export default function PostFeed({ characterId }: PostFeedProps) {
     router.push(`/character/${characterId}`);
   };
 
+  // Generate random heart count between 20-50
+  const getRandomHeartCount = () => {
+    return Math.floor(Math.random() * (50 - 20 + 1)) + 20;
+  };
+
+  // Generate random view count between 160-2400
+  const getRandomViewCount = () => {
+    return Math.floor(Math.random() * (2400 - 160 + 1)) + 160;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -115,12 +125,12 @@ export default function PostFeed({ characterId }: PostFeedProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {posts.map((post) => (
-        <div key={post.id} className="bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-sm hover:shadow-md transition-shadow">
+        <div key={post.id} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
           {/* Post Header */}
-          <div className="flex flex-col space-y-2 mb-3">
-            <div className="flex items-center space-x-2">
+          <div className="p-4 pb-2">
+            <div className="flex items-center space-x-2 mb-2">
               {post.character ? (
                 <button
                   onClick={() => handleCharacterClick(post.character!.id)}
@@ -176,41 +186,53 @@ export default function PostFeed({ characterId }: PostFeedProps) {
             </div>
           </div>
 
-          {/* Post Content */}
-          <div className="space-y-2">
-            {post.title && (
-              <h4 className="text-sm font-semibold text-[#1F2937] line-clamp-2">{post.title}</h4>
-            )}
-            
-            {post.content && (
-              <p className="text-[#374151] text-xs line-clamp-3 leading-relaxed">{post.content}</p>
-            )}
-            
-            {post.imageUrl && (
-              <div className="relative aspect-square">
-                <Image
-                  src={post.imageUrl}
-                  alt={post.description || 'Post image'}
-                  fill
-                  className="rounded-lg object-cover"
-                />
-              </div>
-            )}
-            
-            {post.description && (
-              <p className="text-[#6B7280] text-xs line-clamp-2">{post.description}</p>
-            )}
-          </div>
+          {/* Post Image - Larger and more prominent */}
+          {post.imageUrl && (
+            <div className="relative w-full h-64">
+              <Image
+                src={post.imageUrl}
+                alt={post.title || 'Post image'}
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
 
-          {/* Post Type Badge */}
-          <div className="mt-3">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              post.type === 'image' ? 'bg-blue-100 text-blue-800' :
-              post.type === 'video' ? 'bg-purple-100 text-purple-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
-            </span>
+          {/* Post Title */}
+          {post.title && (
+            <div className="p-4 pt-3">
+              <h4 className="text-sm font-semibold text-[#1F2937] line-clamp-2">{post.title}</h4>
+            </div>
+          )}
+
+          {/* Engagement Stats */}
+          <div className="px-4 pb-4">
+            <div className="flex items-center justify-between text-xs text-[#6B7280]">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1">
+                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  </svg>
+                  <span>{getRandomHeartCount()}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>{getRandomViewCount()}</span>
+                </div>
+              </div>
+              
+              {/* Post Type Badge */}
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                post.type === 'image' ? 'bg-blue-100 text-blue-800' :
+                post.type === 'video' ? 'bg-purple-100 text-purple-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+              </span>
+            </div>
           </div>
         </div>
       ))}

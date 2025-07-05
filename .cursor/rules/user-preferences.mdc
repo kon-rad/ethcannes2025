@@ -4,6 +4,12 @@ globs:
 alwaysApply: true
 ---
 
+## Dot Env file is present
+
+
+The dot env file is present and it has all the variables, it is ignored from cursor and git. 
+
+
 ## CRITICAL RULE: Command Execution
 
 **NEVER run any terminal commands automatically.** Instead:

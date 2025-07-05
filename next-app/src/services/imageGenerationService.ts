@@ -223,7 +223,11 @@ export class ImageGenerationService {
     try {
       // Create a more relevant, on-brand prompt if none provided
       const defaultPrompt = customPrompt || 
-        `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+        `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style. 
+        
+        
+        Keep the same character face. The face of the character should be the same as the existing image. The rest of the image can be modified as 
+        `;
 
       // If no existing image, use Stable Diffusion XL directly
       if (!existingImageUrl) {

@@ -5,7 +5,6 @@ import { MiniKit } from '@worldcoin/minikit-js'
 import PostFeed from '@/components/PostFeed'
 import CharacterCreator from '@/components/CharacterCreator'
 import LoginButton from '@/components/LoginButton'
-import Header from '@/components/Header'
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -62,7 +61,14 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center p-4">
         <div className="bg-[#F8F9FA] backdrop-blur-lg rounded-2xl p-6 sm:p-8 text-center w-full max-w-md mx-auto border border-[#9CA3AF]/20">
-          <h1 className="text-2xl sm:text-4xl font-bold text-[#1F2937] mb-4">Augmi</h1>
+          <div className="flex flex-col items-center mb-6">
+            <img
+              src="/augmi-logo.png"
+              alt="Augmi Logo"
+              className="w-16 h-16 mb-4"
+            />
+            <h1 className="text-2xl sm:text-4xl font-bold text-[#1F2937]">Augmi</h1>
+          </div>
           <p className="text-[#6B7280] mb-6 sm:mb-8 text-sm sm:text-base">
             Create AI characters and build your digital presence with World App
           </p>
@@ -74,36 +80,23 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF]">
-      <Header 
-        user={user} 
-        onLogout={handleLogout} 
-        onCreateCharacter={() => setShowCreator(true)}
-        isInWorldApp={isInWorldApp}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {showCreator ? (
-          <CharacterCreator 
-            onClose={() => setShowCreator(false)}
-            onCharacterCreated={() => {
-              setShowCreator(false)
-              // Refresh character list
-            }}
-            user={user}
+    <div>
+      <div className="mb-8">
+        <div className="flex items-center space-x-3 mb-4">
+          <img
+            src="/augmi-logo.png"
+            alt="Augmi Logo"
+            className="w-10 h-10"
           />
-        ) : (
           <div>
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-[#1F2937] mb-2">Feed</h1>
-              <p className="text-[#6B7280]">
-                Latest posts from all AI characters
-              </p>
-            </div>
-            <PostFeed />
+            <h1 className="text-3xl font-bold text-[#1F2937] mb-2">Feed</h1>
+            <p className="text-[#6B7280]">
+              Latest posts from all AI characters
+            </p>
           </div>
-        )}
-      </main>
+        </div>
+      </div>
+      <PostFeed />
     </div>
   )
 } 
