@@ -81,4 +81,53 @@ export async function generateStableDiffusionImage(prompt: string, model: string
         console.error('Error generating Flux image:', error);
         throw error;
     }
+}
+
+export async function generateImagePromptWithAI({
+    characterName,
+    characterDescription,
+    postPrompt,
+    searchResults
+}: {
+    characterName: string;
+    characterDescription: string;
+    postPrompt?: string;
+    searchResults: string;
+}): Promise<string> {
+    const systemPrompt = `You are an expert at writing image generation prompts for social media content. 
+Your task is to generate a beautiful, detailed image prompt that will create an engaging visual post.
+
+IMPORTANT REQUIREMENTS:
+1. The generated image MUST keep the user's face/character consistent and recognizable
+2. The scene should represent the content from the post prompt
+3. The image should be on-topic and relevant to the character's expertise
+4. Make it visually appealing and suitable for social media
+5. Include details about lighting, composition, style, and mood
+6. Ensure the character's face remains prominent and well-lit
+
+Return ONLY the image generation prompt. Do not include any explanations or additional text.`;
+
+    const userMessage = `
+Character Information:
+- Name: ${characterName}
+- Description: ${characterDescription}
+
+Post Content: ${postPrompt || 'Generate an engaging social media post image'}
+
+Current Search Results/Context:
+${searchResults}
+
+Based on this information, create a detailed image generation prompt that will:
+1. Keep ${characterName}'s face consistent and recognizable
+2. Represent the scene/content from the post prompt
+3. Be visually appealing and on-topic
+4. Work well for social media
+
+Generate the image prompt:`;
+
+    return summarizeWithAI({
+        systemPrompt,
+        userMessage,
+        modelName: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo'
+    });
 } 

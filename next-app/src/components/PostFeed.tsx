@@ -25,9 +25,11 @@ interface Post {
 
 interface PostFeedProps {
   characterId?: string;
+  userId?: string; // Add userId prop for filtering posts by user
+  refreshKey?: number; // Add refresh key prop
 }
 
-export default function PostFeed({ characterId }: PostFeedProps) {
+export default function PostFeed({ characterId, userId, refreshKey }: PostFeedProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,15 +37,18 @@ export default function PostFeed({ characterId }: PostFeedProps) {
 
   useEffect(() => {
     fetchPosts();
-  }, [characterId]);
+  }, [characterId, userId, refreshKey]); // Add userId and refreshKey to dependencies
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      // Fetch posts - if characterId is provided, filter by that character
-      const url = characterId 
-        ? `/api/posts?characterId=${characterId}&limit=50`
-        : '/api/posts?limit=50';
+      // Build URL with query parameters
+      const params = new URLSearchParams();
+      if (characterId) params.append('characterId', characterId);
+      if (userId) params.append('userId', userId);
+      params.append('limit', '50');
+      
+      const url = `/api/posts?${params.toString()}`;
       
       const response = await fetch(url);
       if (response.ok) {

@@ -219,7 +219,7 @@ export default function CharacterChat() {
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.role === 'user'
-                      ? 'bg-[#6B7280] text-white'
+                      ? 'bg-[#6B7280] text-black'
                       : 'bg-[#F3F4F6] text-[#1F2937]'
                   }`}
                 >
@@ -254,7 +254,7 @@ export default function CharacterChat() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
               placeholder={`Message ${character.name}...`}
               rows={1}
               disabled={sending}
@@ -266,7 +266,7 @@ export default function CharacterChat() {
                 !newMessage.trim() || sending
                   ? 'bg-purple-500 cursor-not-allowed'
                   : 'bg-purple-600 hover:bg-purple-700'
-              } text-white px-4 py-2 rounded-lg transition-colors`}
+              } text-black px-4 py-2 rounded-lg transition-colors`}
             >
               {sending ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

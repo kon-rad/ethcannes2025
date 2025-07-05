@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [reelPrompts, setReelPrompts] = useState<{ [key: string]: string }>({});
   const [generatingImage, setGeneratingImage] = useState<{ [key: string]: boolean }>({});
   const [generatingReel, setGeneratingReel] = useState<{ [key: string]: boolean }>({});
+  const [postFeedRefreshKey, setPostFeedRefreshKey] = useState(0); // Add refresh key for PostFeed
 
   const userId = searchParams.get('userId');
   const walletAddress = searchParams.get('walletAddress');
@@ -93,6 +94,10 @@ export default function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         setImagePrompts(prev => ({ ...prev, [character.id]: '' }));
+        
+        // Refresh the post feed to show the new post
+        setPostFeedRefreshKey(prev => prev + 1);
+        
         alert('New image generated and posted successfully!');
       } else {
         const errorData = await response.json();
@@ -127,6 +132,10 @@ export default function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         setReelPrompts(prev => ({ ...prev, [character.id]: '' }));
+        
+        // Refresh the post feed to show the new post
+        setPostFeedRefreshKey(prev => prev + 1);
+        
         alert('Reel generated successfully! Check the console for debugging information.');
       } else {
         const errorData = await response.json();
@@ -222,7 +231,7 @@ export default function ProfilePage() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         {activeTab === 'posts' ? (
-          <PostFeed userId={user.id} />
+          <PostFeed userId={user.id} refreshKey={postFeedRefreshKey} />
         ) : (
           <div className="space-y-6">
             {user.characters.map((character) => (

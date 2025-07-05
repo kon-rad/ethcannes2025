@@ -60,6 +60,7 @@ export default function CharacterManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [testingTopics, setTestingTopics] = useState(false)
   const [topicResults, setTopicResults] = useState<string[]>([])
+  const [postFeedRefreshKey, setPostFeedRefreshKey] = useState(0) // Add refresh key for PostFeed
 
   useEffect(() => {
     checkAuthStatus()
@@ -146,9 +147,10 @@ export default function CharacterManagement() {
           characterId: character.id,
           characterName: character.name,
           characterDescription: character.description,
-          prompt: imagePrompt || undefined,
+          postPrompt: imagePrompt || undefined, // Rename to postPrompt to be more specific
           existingImageUrl: character.imageUrl || undefined,
-          userId: user.id
+          userId: user.id,
+          useCurrentState: true // Flag to indicate we want to use current state search results
         }),
       })
 
@@ -158,6 +160,12 @@ export default function CharacterManagement() {
         // Don't update the character's imageUrl - this is for posts, not avatar changes
         // The image is already saved as a post in the database
         setImagePrompt('')
+        setSearchQuery('') // Clear the search query as well
+        setTopicResults([]) // Clear topic results
+        
+        // Refresh the post feed to show the new post
+        setPostFeedRefreshKey(prev => prev + 1)
+        
         alert('New image generated and posted successfully!')
       } else {
         const errorData = await response.json()
@@ -906,7 +914,7 @@ export default function CharacterManagement() {
                 {character.name}'s Posts
               </h3>
               <div className="bg-[#F3F4F6] rounded-lg p-1 sm:p-6">
-                <PostFeed characterId={character.id} />
+                <PostFeed characterId={character.id} refreshKey={postFeedRefreshKey} />
               </div>
             </div>
           )}

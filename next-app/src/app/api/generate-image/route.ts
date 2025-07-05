@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { imageGenerationService } from '@/services/imageGenerationService';
+import { generateImagePromptWithAI } from '@/services/aiService';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     const { 
       prompt, 
+      postPrompt, // New parameter for post-specific prompt
       characterId,
       characterName, 
       characterDescription, 
       existingImageUrl,
       steps = 28, 
       n = 1,
-      userId // Add userId to save posts
+      userId, // Add userId to save posts
+      useCurrentState = false // Flag to use current state search results
     } = await request.json();
 
-    if (!prompt && (!characterName || !characterDescription)) {
+    if (!prompt && !postPrompt && (!characterName || !characterDescription)) {
       return NextResponse.json(
-        { error: 'Either prompt or characterName + characterDescription are required' },
+        { error: 'Either prompt, postPrompt, or characterName + characterDescription are required' },
         { status: 400 }
       );
     }
@@ -29,9 +32,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate prompt if provided
-    if (prompt) {
-      const validation = imageGenerationService.validatePrompt(prompt);
+    // Get current state search results if requested
+    let currentStateSearchResults: string | null = null;
+    if (useCurrentState && characterId) {
+      try {
+        const currentState = await prisma.currentState.findUnique({
+          where: {
+            userId_characterId: {
+              userId,
+              characterId
+            }
+          }
+        });
+        currentStateSearchResults = currentState?.searchResults || null;
+        console.log('Current state search results found:', !!currentStateSearchResults);
+      } catch (error) {
+        console.warn('Failed to fetch current state search results:', error);
+        // Continue without search results
+      }
+    }
+
+    // Generate AI prompt if postPrompt is provided and we have search results
+    let finalPrompt = prompt;
+    if (postPrompt && currentStateSearchResults && characterName && characterDescription) {
+      try {
+        console.log('Generating AI image prompt with current state context...');
+        finalPrompt = await generateImagePromptWithAI({
+          characterName,
+          characterDescription,
+          postPrompt,
+          searchResults: currentStateSearchResults
+        });
+        console.log('AI-generated prompt:', finalPrompt);
+      } catch (error) {
+        console.error('Failed to generate AI prompt, falling back to postPrompt:', error);
+        finalPrompt = postPrompt;
+      }
+    } else if (postPrompt) {
+      // Use postPrompt directly if no search results available
+      finalPrompt = postPrompt;
+    }
+
+    // Validate final prompt
+    if (finalPrompt) {
+      const validation = imageGenerationService.validatePrompt(finalPrompt);
       if (!validation.isValid) {
         return NextResponse.json(
           { error: validation.error },
@@ -42,15 +86,26 @@ export async function POST(request: NextRequest) {
 
     let imageUrl: string;
     let usedModel: string = 'unknown';
-    let finalPrompt: string = '';
 
-    if (prompt) {
-      // Generate image with custom prompt
-      finalPrompt = prompt;
-      console.log('Using custom prompt:', finalPrompt);
-      console.log('Condition image for custom prompt:', existingImageUrl);
+    // Use the finalPrompt that was generated above, or fall back to original logic
+    if (finalPrompt) {
+      // Generate image with the AI-generated or provided prompt
+      console.log('Using final prompt:', finalPrompt);
+      console.log('Condition image for final prompt:', existingImageUrl);
       const response = await imageGenerationService.generateImages({
         prompt: finalPrompt,
+        steps,
+        n: 1,
+        conditionImage: existingImageUrl
+      });
+      imageUrl = response.images[0];
+      usedModel = response.model;
+    } else if (prompt) {
+      // Fallback to original prompt logic
+      console.log('Using original prompt:', prompt);
+      console.log('Condition image for original prompt:', existingImageUrl);
+      const response = await imageGenerationService.generateImages({
+        prompt: prompt,
         steps,
         n: 1,
         conditionImage: existingImageUrl
@@ -62,8 +117,7 @@ export async function POST(request: NextRequest) {
       if (characterId) {
         if (existingImageUrl) {
           // Use FLUX.1 Kontext with conditional image
-          // Create a more relevant, on-brand prompt based on the character's personality
-          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
           finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Kontext with condition image. Prompt:', finalPrompt);
           console.log('Character avatar URL for condition:', existingImageUrl);
@@ -71,19 +125,19 @@ export async function POST(request: NextRequest) {
             characterId,
             characterName,
             characterDescription,
-            prompt,
+            defaultPrompt,
             existingImageUrl
           );
-          usedModel = 'black-forest-labs/FLUX.1-kontext-dev'; // This might have fallen back
+          usedModel = 'black-forest-labs/FLUX.1-kontext-dev';
         } else {
           // Generate initial image without conditional image
-          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
           finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Dev for initial image. Prompt:', finalPrompt);
           const base64Image = await imageGenerationService.generateInitialCharacterImage(
             characterName,
             characterDescription,
-            prompt
+            defaultPrompt
           );
           imageUrl = await imageGenerationService.uploadImageToS3(base64Image, characterId);
           usedModel = 'black-forest-labs/FLUX.1-dev';
@@ -91,24 +145,24 @@ export async function POST(request: NextRequest) {
       } else {
         // Fallback to base64 image if no characterId provided
         if (existingImageUrl) {
-          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
           finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Kontext without characterId. Prompt:', finalPrompt);
           imageUrl = await imageGenerationService.generateCharacterImage(
             characterName,
             characterDescription,
-            prompt,
+            defaultPrompt,
             existingImageUrl
           );
-          usedModel = 'black-forest-labs/FLUX.1-kontext-dev'; // This might have fallen back
+          usedModel = 'black-forest-labs/FLUX.1-kontext-dev';
         } else {
-          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
           finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Dev without characterId. Prompt:', finalPrompt);
           imageUrl = await imageGenerationService.generateInitialCharacterImage(
             characterName,
             characterDescription,
-            prompt
+            defaultPrompt
           );
           usedModel = 'black-forest-labs/FLUX.1-dev';
         }
@@ -129,7 +183,7 @@ export async function POST(request: NextRequest) {
       console.log('Attempting to save post to database:', {
         type: 'image',
         imageUrl,
-        title: prompt || `Generated image of ${characterName}`,
+        title: postPrompt || prompt || `Generated image of ${characterName}`,
         description: `Generated using ${usedModel}`,
         prompt: finalPrompt,
         userId,
@@ -141,7 +195,7 @@ export async function POST(request: NextRequest) {
         data: {
           type: 'image',
           imageUrl,
-          title: prompt || `Generated image of ${characterName}`,
+          title: postPrompt || prompt || `Generated image of ${characterName}`,
           description: `Generated using ${usedModel}`,
           prompt: finalPrompt,
           userId,
@@ -162,7 +216,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       imageUrl,
-      prompt: prompt || `Professional headshot of ${characterName}, ${characterDescription}`,
+      prompt: finalPrompt || prompt || `Professional headshot of ${characterName}, ${characterDescription}`,
       model: usedModel,
       steps,
       n,

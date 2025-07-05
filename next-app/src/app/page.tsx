@@ -11,6 +11,7 @@ export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [showCreator, setShowCreator] = useState(false)
   const [isInWorldApp, setIsInWorldApp] = useState(false)
+  const [postFeedRefreshKey, setPostFeedRefreshKey] = useState(0) // Add refresh key for PostFeed
 
   useEffect(() => {
     // Check if we're running in World App
@@ -57,6 +58,10 @@ export default function Home() {
     }
   }
 
+  const refreshPostFeed = () => {
+    setPostFeedRefreshKey(prev => prev + 1)
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center p-4">
@@ -96,7 +101,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <PostFeed />
+      <PostFeed refreshKey={postFeedRefreshKey} />
     </div>
   )
 } 
