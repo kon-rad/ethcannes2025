@@ -14,14 +14,17 @@ interface HeaderProps {
 export default function Header({ user, onLogout, onCreateCharacter, isInWorldApp }: HeaderProps) {
   const { isConnected, address } = useWallet()
   const router = useRouter()
-  const [shortAddress, setShortAddress] = useState('')
+  const [formattedAddress, setFormattedAddress] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    if (address) {
-      setShortAddress(`${address.slice(0, 6)}...${address.slice(-4)}`)
+    if (user?.walletAddress) {
+      const address = user.walletAddress
+      setFormattedAddress(`${address.slice(0, 6)}...${address.slice(-4)}`)
+    } else if (address) {
+      setFormattedAddress(`${address.slice(0, 6)}...${address.slice(-4)}`)
     }
-  }, [address])
+  }, [user?.walletAddress, address])
 
   const handleCreateCharacter = () => {
     if (onCreateCharacter) {
@@ -66,9 +69,13 @@ export default function Header({ user, onLogout, onCreateCharacter, isInWorldApp
                 {/* Wallet Status */}
                 {user?.walletAddress && (
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-[#22C55E] rounded-full"></div>
+                    <img
+                      src="/wld-logo.png"
+                      alt="World Logo"
+                      className="w-5 h-5"
+                    />
                     <span className="text-[#1F2937] text-sm font-medium">
-                      {shortAddress}
+                      {formattedAddress}
                     </span>
                     {isInWorldApp && (
                       <span className="text-[#22C55E] text-xs">🌍 World App</span>
@@ -167,9 +174,13 @@ export default function Header({ user, onLogout, onCreateCharacter, isInWorldApp
                 {user?.walletAddress && (
                   <div className="flex items-center justify-between p-3 bg-[#9CA3AF]/5 rounded-lg">
                     <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-[#22C55E] rounded-full"></div>
+                      <img
+                        src="/wld-logo.png"
+                        alt="World Logo"
+                        className="w-4 h-4"
+                      />
                       <span className="text-[#1F2937] text-sm font-medium">
-                        {shortAddress}
+                        {formattedAddress}
                       </span>
                       {isInWorldApp && (
                         <span className="text-[#22C55E] text-xs">🌍</span>
