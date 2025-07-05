@@ -77,12 +77,12 @@ export async function PUT(
         description: updateData.description,
         systemPrompt: updateData.systemPrompt,
         imageUrl: updateData.imageUrl,
-        consultationCallPrice: updateData.consultationCallPrice,
-        sponsorshipReelPrice: updateData.sponsorshipReelPrice,
+        ownerWalletAddress: updateData.ownerWalletAddress,
         exclusiveContentPrice: updateData.exclusiveContentPrice,
-        chatPrice: updateData.chatPrice,
-        voicePrice: updateData.voicePrice,
-        brandPromoPrice: updateData.brandPromoPrice
+        chatPricePerMessage: updateData.chatPricePerMessage,
+        voicePricePerMinute: updateData.voicePricePerMinute,
+        brandPromoPrice: updateData.brandPromoPrice,
+        contractAddress: updateData.contractAddress
       },
       include: {
         user: {

@@ -16,9 +16,14 @@ export default function Home() {
   useEffect(() => {
     // Check if we're running in World App
     const checkWorldApp = () => {
-      const installed = MiniKit.isInstalled()
-      setIsInWorldApp(installed)
-      console.log('MiniKit installed:', installed)
+      try {
+        const installed = MiniKit.isInstalled()
+        setIsInWorldApp(installed)
+        console.log('MiniKit installed:', installed)
+      } catch (error) {
+        console.log('MiniKit not available:', error)
+        setIsInWorldApp(false)
+      }
     }
 
     checkWorldApp()
@@ -55,11 +60,11 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center max-w-md w-full mx-4">
-          <h1 className="text-4xl font-bold text-white mb-4">AI Influencer Platform</h1>
-          <p className="text-gray-300 mb-8">
-            Create AI characters and monetize exclusive content with World App
+      <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center p-4">
+        <div className="bg-[#F8F9FA] backdrop-blur-lg rounded-2xl p-6 sm:p-8 text-center w-full max-w-md mx-auto border border-[#9CA3AF]/20">
+          <h1 className="text-2xl sm:text-4xl font-bold text-[#1F2937] mb-4">Augmi</h1>
+          <p className="text-[#6B7280] mb-6 sm:mb-8 text-sm sm:text-base">
+            Create AI characters and build your digital presence with World App
           </p>
           
           <LoginButton onLogin={handleLogin} />
@@ -69,7 +74,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-[#FFFFFF]">
       <Header 
         user={user} 
         onLogout={handleLogout} 
@@ -77,7 +82,7 @@ export default function Home() {
         isInWorldApp={isInWorldApp}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {showCreator ? (
           <CharacterCreator 
             onClose={() => setShowCreator(false)}

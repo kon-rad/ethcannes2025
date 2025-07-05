@@ -99,7 +99,7 @@ export function useWallet(): UseWalletReturn {
       const message = new SiweMessage({
         domain: window.location.hostname,
         address: checksummedAddress,
-        statement: 'Sign in to the AI Influencer Platform',
+        statement: 'Sign in to the Augmi',
         uri: window.location.origin,
         version: '1',
         chainId: chainIdNumber,

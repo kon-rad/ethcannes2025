@@ -1,26 +1,184 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Design System Color Palette */
+  --augmi-black: #0E0E0F;
+  --steel-gray: #2D2D30;
+  --platinum-silver: #C0C0C8;
+  --chrome-accent: #A1A1AA;
+  --electric-blue: #3B82F6;
+  --white-smoke: #F5F5F7;
+  --success-green: #22C55E;
+  --error-red: #EF4444;
+  
+  /* Light Mode Overrides */
+  --augmi-white: #FFFFFF;
+  --steel-gray-light: #F8F9FA;
+  --platinum-silver-light: #6B7280;
+  --chrome-accent-light: #9CA3AF;
+  --dark-text: #1F2937;
+  
+  /* Legacy support - mapping to new colors */
+  --background: var(--augmi-white);
+  --foreground: var(--dark-text);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Background colors */
+  --color-background: var(--augmi-white);
+  --color-foreground: var(--dark-text);
+  
+  /* Surface colors */
+  --color-steel-gray: var(--steel-gray-light);
+  --color-platinum-silver: var(--platinum-silver-light);
+  --color-chrome-accent: var(--chrome-accent-light);
+  
+  /* Interactive colors */
+  --color-electric-blue: var(--electric-blue);
+  --color-success-green: var(--success-green);
+  --color-error-red: var(--error-red);
+  
+  /* Typography */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Mobile-first responsive design */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Improve touch targets */
+  button, a, input, textarea, select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better form elements on mobile */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Ensure proper viewport behavior */
+* {
+  box-sizing: border-box;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility - using electric blue */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
+}
+
+/* Design System Button Components */
+.btn-primary {
+  @apply bg-[#3B82F6] hover:bg-[#3B82F6]/80 text-[#F5F5F7] 
+         px-4 py-2.5 rounded-xl transition-all duration-200 
+         font-medium text-sm disabled:bg-[#A1A1AA] 
+         disabled:cursor-not-allowed focus:outline-none 
+         focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 
+         focus:ring-offset-white;
+}
+
+.btn-secondary {
+  @apply bg-[#A1A1AA] hover:bg-[#A1A1AA]/80 text-[#F5F5F7] 
+         px-4 py-2.5 rounded-xl transition-all duration-200 
+         font-medium text-sm disabled:bg-[#A1A1AA]/50 
+         disabled:cursor-not-allowed focus:outline-none 
+         focus:ring-2 focus:ring-[#A1A1AA] focus:ring-offset-2 
+         focus:ring-offset-white;
+}
+
+.btn-success {
+  @apply bg-[#22C55E] hover:bg-[#22C55E]/80 text-[#F5F5F7] 
+         px-4 py-2.5 rounded-xl transition-all duration-200 
+         font-medium text-sm disabled:bg-[#A1A1AA] 
+         disabled:cursor-not-allowed focus:outline-none 
+         focus:ring-2 focus:ring-[#22C55E] focus:ring-offset-2 
+         focus:ring-offset-white;
+}
+
+.btn-danger {
+  @apply bg-[#EF4444] hover:bg-[#EF4444]/80 text-[#F5F5F7] 
+         px-4 py-2.5 rounded-xl transition-all duration-200 
+         font-medium text-sm disabled:bg-[#A1A1AA] 
+         disabled:cursor-not-allowed focus:outline-none 
+         focus:ring-2 focus:ring-[#EF4444] focus:ring-offset-2 
+         focus:ring-offset-white;
+}
+
+.btn-ghost {
+  @apply bg-transparent hover:bg-[#A1A1AA]/10 text-[#C0C0C8] 
+         hover:text-[#F5F5F7] px-4 py-2.5 rounded-xl transition-all duration-200 
+         font-medium text-sm disabled:bg-transparent 
+         disabled:cursor-not-allowed focus:outline-none 
+         focus:ring-2 focus:ring-[#A1A1AA] focus:ring-offset-2 
+         focus:ring-offset-white;
+}
+
+/* Button Size Variants */
+.btn-sm {
+  @apply px-3 py-2 text-xs;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-base;
+}
+
+/* Component Classes */
+.card {
+  @apply bg-[#F8F9FA] backdrop-blur-lg rounded-2xl 
+         border border-[#9CA3AF]/20 p-4 sm:p-6 lg:p-8;
+}
+
+.input {
+  @apply w-full px-3 sm:px-4 py-3 bg-white 
+         border border-[#9CA3AF]/30 rounded-xl 
+         text-[#1F2937] placeholder-[#9CA3AF] 
+         focus:outline-none focus:ring-2 focus:ring-[#3B82F6] 
+         focus:border-[#3B82F6] transition-all duration-200;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-black/20 backdrop-blur-sm 
+         flex items-center justify-center z-50 p-2 sm:p-4;
+}
+
+.modal-content {
+  @apply bg-[#F8F9FA] backdrop-blur-lg rounded-2xl 
+         border border-[#9CA3AF]/20 p-4 sm:p-6 lg:p-8 
+         w-full max-w-4xl max-h-[95vh] overflow-y-auto;
 }

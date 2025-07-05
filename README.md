@@ -1,4 +1,4 @@
-# AI Influencer Platform
+# Augmi
 
 A Next.js application that allows users to create AI characters and monetize exclusive content using World App authentication and smart contracts.
 

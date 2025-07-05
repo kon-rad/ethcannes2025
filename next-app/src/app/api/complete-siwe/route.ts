@@ -25,6 +25,12 @@ export async function POST(req: NextRequest) {
       const cookieStore = await cookies()
       const storedNonce = cookieStore.get('siwe')?.value
       
+      console.log('Nonce verification:', { 
+        receivedNonce: nonce, 
+        storedNonce: storedNonce,
+        match: nonce === storedNonce 
+      })
+      
       if (nonce !== storedNonce) {
         return NextResponse.json({
           status: 'error',
@@ -34,7 +40,10 @@ export async function POST(req: NextRequest) {
       }
 
       try {
+        console.log('Verifying SIWE message with nonce:', nonce)
         const validMessage = await verifySiweMessage(payload, nonce)
+        console.log('SIWE verification result:', validMessage)
+        
         if (!validMessage.isValid) {
           return NextResponse.json({
             status: 'error',
@@ -44,6 +53,7 @@ export async function POST(req: NextRequest) {
         }
         address = payload.address
       } catch (error: any) {
+        console.error('SIWE verification error:', error)
         return NextResponse.json({
           status: 'error',
           isValid: false,

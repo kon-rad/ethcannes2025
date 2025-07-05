@@ -169,7 +169,7 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-2xl font-bold">
+                <span className="text-black text-2xl font-bold">
                   {user.walletAddress.slice(2, 4).toUpperCase()}
                 </span>
               </div>
@@ -271,7 +271,7 @@ export default function ProfilePage() {
                         <button
                           onClick={() => generateNewImage(character)}
                           disabled={generatingImage[character.id]}
-                          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm transition-colors flex items-center space-x-2"
+                          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-black px-4 py-2 rounded-md text-sm transition-colors flex items-center space-x-2"
                         >
                           {generatingImage[character.id] ? (
                             <>
@@ -305,7 +305,7 @@ export default function ProfilePage() {
                         <button
                           onClick={() => generateNewReel(character)}
                           disabled={generatingReel[character.id]}
-                          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm transition-colors flex items-center space-x-2"
+                          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-black px-4 py-2 rounded-md text-sm transition-colors flex items-center space-x-2"
                         >
                           {generatingReel[character.id] ? (
                             <>

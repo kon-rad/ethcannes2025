@@ -99,11 +99,11 @@ export default function PostFeed({ userId, characterId, limit = 20 }: PostFeedPr
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-500">Error: {error}</p>
+      <div className="text-center py-6 sm:py-8 px-4">
+        <p className="text-red-500 text-sm sm:text-base">Error: {error}</p>
         <button 
           onClick={() => fetchPosts(true)}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="mt-4 px-4 py-2 bg-blue-500 text-black rounded-lg hover:bg-blue-600 text-sm sm:text-base"
         >
           Retry
         </button>
@@ -113,27 +113,27 @@ export default function PostFeed({ userId, characterId, limit = 20 }: PostFeedPr
 
   if (loading && posts.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-6 sm:py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading posts...</p>
+        <p className="mt-2 text-gray-600 text-sm sm:text-base">Loading posts...</p>
       </div>
     );
   }
 
   if (posts.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600">No posts yet.</p>
+      <div className="text-center py-6 sm:py-8">
+        <p className="text-gray-600 text-sm sm:text-base">No posts yet.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {posts.map((post) => (
-        <div key={post.id} className="bg-white rounded-lg shadow-md p-6">
+        <div key={post.id} className="bg-white rounded-lg shadow-md p-4 sm:p-6">
           {/* Post Header */}
-          <div className="flex items-center mb-4">
+          <div className="flex items-center mb-3 sm:mb-4">
             <div className="flex-shrink-0">
               {post.character?.imageUrl ? (
                 <Image
@@ -141,19 +141,19 @@ export default function PostFeed({ userId, characterId, limit = 20 }: PostFeedPr
                   alt={post.character.name}
                   width={40}
                   height={40}
-                  className="rounded-full"
+                  className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 text-sm">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                  <span className="text-gray-600 text-xs sm:text-sm">
                     {post.user.walletAddress.slice(2, 4).toUpperCase()}
                   </span>
                 </div>
               )}
             </div>
-            <div className="ml-3 flex-1">
-              <div className="flex items-center">
-                <p className="text-sm font-medium text-gray-900">
+            <div className="ml-3 flex-1 min-w-0">
+              <div className="flex items-center flex-wrap">
+                <p className="text-sm font-medium text-gray-900 truncate">
                   {post.character?.name || shortenAddress(post.user.walletAddress)}
                 </p>
                 {post.character && (
@@ -170,15 +170,15 @@ export default function PostFeed({ userId, characterId, limit = 20 }: PostFeedPr
 
           {/* Post Content */}
           {post.title && (
-            <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
+            <h3 className="text-base sm:text-lg font-semibold mb-2">{post.title}</h3>
           )}
           
           {post.description && (
-            <p className="text-gray-600 mb-4">{post.description}</p>
+            <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">{post.description}</p>
           )}
 
           {post.type === 'image' && post.imageUrl && (
-            <div className="mb-4">
+            <div className="mb-3 sm:mb-4">
               <Image
                 src={post.imageUrl}
                 alt={post.title || 'Generated image'}
@@ -191,11 +191,11 @@ export default function PostFeed({ userId, characterId, limit = 20 }: PostFeedPr
           )}
 
           {post.type === 'text' && post.content && (
-            <p className="text-gray-800 mb-4 whitespace-pre-wrap">{post.content}</p>
+            <p className="text-gray-800 mb-3 sm:mb-4 whitespace-pre-wrap text-sm sm:text-base">{post.content}</p>
           )}
 
           {/* Post Footer */}
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500">
             <span className="capitalize">{post.type} post</span>
             {post.character && (
               <span className="text-blue-600">@{post.character.name}</span>
@@ -206,11 +206,11 @@ export default function PostFeed({ userId, characterId, limit = 20 }: PostFeedPr
 
       {/* Load More Button */}
       {hasMore && (
-        <div className="text-center">
+        <div className="text-center pt-4">
           <button
             onClick={() => fetchPosts(false)}
             disabled={loading}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 sm:py-2 bg-blue-500 text-black rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>

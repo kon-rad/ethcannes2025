@@ -1,6 +1,6 @@
 # World App Mini App Setup Guide
 
-This guide will help you set up and test the AI Influencer Platform as a World App Mini App.
+This guide will help you set up and test the Augmi as a World App Mini App.
 
 ## Prerequisites
 
@@ -67,7 +67,7 @@ This will give you a public URL like `https://abc123.ngrok.io`
 2. Create a new Mini App or use an existing one
 3. Set the Mini App URL to your ngrok URL: `https://abc123.ngrok.io`
 4. Configure the following settings:
-   - **App Name**: AI Influencer Platform
+   - **App Name**: Augmi
    - **Description**: Create and monetize AI characters with exclusive content
    - **Icon**: Upload an appropriate icon
    - **Category**: Entertainment or Social

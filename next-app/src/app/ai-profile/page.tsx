@@ -10,13 +10,7 @@ interface Character {
   description: string
   systemPrompt: string
   imageUrl?: string
-  contractAddress?: string
-  consultationCallPrice?: string
-  sponsorshipReelPrice?: string
-  exclusiveContentPrice?: string
-  chatPrice?: string
-  voicePrice?: string
-  brandPromoPrice?: string
+  ownerWalletAddress: string
   createdAt: string
   user: {
     walletAddress: string
@@ -191,25 +185,25 @@ export default function AIProfileHome() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3B82F6]"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-[#FFFFFF]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8">
+        <div className="bg-[#F8F9FA] backdrop-blur-lg rounded-2xl p-6 mb-8 border border-[#9CA3AF]/20">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">AI Profile Hub</h1>
-              <p className="text-gray-300 mt-2">Manage your AI characters and conversations</p>
+              <h1 className="text-3xl font-bold text-[#1F2937]">AI Profile Hub</h1>
+              <p className="text-[#6B7280] mt-2">Manage your AI characters and conversations</p>
             </div>
             <button
               onClick={() => router.push('/')}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="btn-ghost"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -219,14 +213,14 @@ export default function AIProfileHome() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8">
-          <div className="flex space-x-8 border-b border-white/20">
+        <div className="bg-[#F8F9FA] backdrop-blur-lg rounded-2xl p-6 mb-8 border border-[#9CA3AF]/20">
+          <div className="flex space-x-8 border-b border-[#9CA3AF]/20">
             <button
               onClick={() => setActiveTab('characters')}
               className={`pb-4 px-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'characters'
-                  ? 'border-purple-500 text-purple-400'
-                  : 'border-transparent text-gray-300 hover:text-white'
+                  ? 'border-[#3B82F6] text-[#3B82F6]'
+                  : 'border-transparent text-[#6B7280] hover:text-[#1F2937]'
               }`}
             >
               Characters
@@ -235,8 +229,8 @@ export default function AIProfileHome() {
               onClick={() => setActiveTab('chat')}
               className={`pb-4 px-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'chat'
-                  ? 'border-purple-500 text-purple-400'
-                  : 'border-transparent text-gray-300 hover:text-white'
+                  ? 'border-[#3B82F6] text-[#3B82F6]'
+                  : 'border-transparent text-[#6B7280] hover:text-[#1F2937]'
               }`}
             >
               Chat History
@@ -245,8 +239,8 @@ export default function AIProfileHome() {
               onClick={() => setActiveTab('analytics')}
               className={`pb-4 px-2 border-b-2 font-medium transition-colors ${
                 activeTab === 'analytics'
-                  ? 'border-purple-500 text-purple-400'
-                  : 'border-transparent text-gray-300 hover:text-white'
+                  ? 'border-[#3B82F6] text-[#3B82F6]'
+                  : 'border-transparent text-[#6B7280] hover:text-[#1F2937]'
               }`}
             >
               Analytics
@@ -255,14 +249,14 @@ export default function AIProfileHome() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
+        <div className="bg-white backdrop-blur-lg rounded-2xl p-6 border border-[#9CA3AF]/20">
           {activeTab === 'characters' && (
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Your AI Characters</h2>
+                <h2 className="text-2xl font-bold text-[#1F2937]">Your AI Characters</h2>
                 <button
                   onClick={() => router.push('/create-character')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  className=""
                 >
                   Create New Character
                 </button>
@@ -270,13 +264,13 @@ export default function AIProfileHome() {
               
               {characters.length === 0 ? (
                 <div className="text-center py-12">
-                  <h3 className="text-xl font-semibold text-white mb-4">No Characters Yet</h3>
-                  <p className="text-gray-300 mb-6">
+                  <h3 className="text-xl font-semibold text-[#1F2937] mb-4">No Characters Yet</h3>
+                  <p className="text-[#6B7280] mb-6">
                     Create your first AI character to start building your digital presence
                   </p>
                   <button
                     onClick={() => router.push('/create-character')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors"
+                    className=" btn-lg"
                   >
                     Create Character
                   </button>
@@ -286,10 +280,10 @@ export default function AIProfileHome() {
                   {characters.map((character) => (
                     <div
                       key={character.id}
-                      className="bg-white/5 rounded-xl p-6 border border-white/20 hover:border-white/40 transition-all duration-200"
+                      className="bg-[#F8F9FA] rounded-xl p-6 border border-[#9CA3AF]/20 hover:border-[#9CA3AF]/40 transition-all duration-200"
                     >
                       {character.imageUrl && (
-                        <div className="w-full h-32 bg-gray-700 rounded-lg mb-4 flex items-center justify-center">
+                        <div className="w-full h-32 bg-[#9CA3AF]/20 rounded-lg mb-4 flex items-center justify-center">
                           <img
                             src={character.imageUrl}
                             alt={character.name}
@@ -297,15 +291,15 @@ export default function AIProfileHome() {
                           />
                         </div>
                       )}
-                      <h3 className="text-lg font-semibold text-white mb-2">{character.name}</h3>
-                      <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                      <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{character.name}</h3>
+                      <p className="text-[#6B7280] text-sm mb-4 line-clamp-2">
                         {character.description}
                       </p>
                       
                       <div className="flex space-x-2">
                         <button
                           onClick={() => router.push(`/character/${character.id}/chat`)}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-center space-x-1"
+                          className="flex-1 btn-secondary flex items-center justify-center space-x-1"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -314,7 +308,7 @@ export default function AIProfileHome() {
                         </button>
                         <button
                           onClick={() => router.push(`/character/${character.id}`)}
-                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+                          className="flex-1 "
                         >
                           Manage
                         </button>
@@ -329,7 +323,7 @@ export default function AIProfileHome() {
           {activeTab === 'chat' && (
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Chat History</h2>
+                <h2 className="text-2xl font-bold text-[#1F2937]">Chat History</h2>
                 <div className="flex space-x-4">
                   <select
                     value={selectedCharacter?.id || ''}
@@ -337,7 +331,7 @@ export default function AIProfileHome() {
                       const character = characters.find(c => c.id === e.target.value)
                       setSelectedCharacter(character || null)
                     }}
-                    className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white"
+                    className="bg-white border border-[#9CA3AF]/30 rounded-lg px-4 py-2 text-[#1F2937]"
                   >
                     <option value="">All Characters</option>
                     {characters.map(character => (
@@ -351,7 +345,7 @@ export default function AIProfileHome() {
 
               {/* Quick Chat Input */}
               {selectedCharacter && (
-                <div className="mb-6 p-4 bg-white/5 rounded-lg">
+                <div className="mb-6 p-4 bg-[#F3F4F6] rounded-lg">
                   <div className="flex items-center space-x-3 mb-3">
                     {selectedCharacter.imageUrl && (
                       <img
@@ -360,7 +354,7 @@ export default function AIProfileHome() {
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     )}
-                    <span className="text-white font-medium">Chat with {selectedCharacter.name}</span>
+                    <span className="text-[#1F2937] font-medium">Chat with {selectedCharacter.name}</span>
                   </div>
                   <div className="flex space-x-4">
                     <input
@@ -369,13 +363,13 @@ export default function AIProfileHome() {
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                       placeholder={`Message ${selectedCharacter.name}...`}
-                      className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="flex-1 px-4 py-2 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280]"
                       disabled={sending}
                     />
                     <button
                       onClick={sendMessage}
                       disabled={!newMessage.trim() || sending}
-                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+                      className=" px-6 py-2"
                     >
                       {sending ? 'Sending...' : 'Send'}
                     </button>
@@ -387,7 +381,7 @@ export default function AIProfileHome() {
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {chatHistory.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-400">No chat history yet. Start a conversation!</p>
+                    <p className="text-[#6B7280]">No chat history yet. Start a conversation!</p>
                   </div>
                 ) : (
                   chatHistory.map((message) => (
@@ -397,8 +391,8 @@ export default function AIProfileHome() {
                     >
                       <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                         message.role === 'user'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white/10 text-white'
+                          ? 'bg-[#6B7280] text-white'
+                          : 'bg-[#F3F4F6] text-[#1F2937]'
                       }`}>
                         <div className="flex items-center space-x-2 mb-1">
                           {message.character.imageUrl && (
@@ -412,7 +406,7 @@ export default function AIProfileHome() {
                         </div>
                         <p className="text-sm">{message.content}</p>
                         <p className={`text-xs mt-1 ${
-                          message.role === 'user' ? 'text-purple-200' : 'text-gray-400'
+                          message.role === 'user' ? 'text-gray-200' : 'text-[#6B7280]'
                         }`}>
                           {formatTime(message.createdAt)}
                         </p>
@@ -426,32 +420,32 @@ export default function AIProfileHome() {
 
           {activeTab === 'analytics' && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Analytics</h2>
+              <h2 className="text-2xl font-bold text-[#1F2937] mb-6">Analytics</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 bg-white/5 rounded-lg text-center">
-                  <h3 className="text-lg font-medium text-white mb-2">Total Characters</h3>
-                  <p className="text-3xl font-bold text-purple-400">{characters.length}</p>
+                <div className="p-6 bg-[#F8F9FA] rounded-lg text-center">
+                  <h3 className="text-lg font-medium text-[#1F2937] mb-2">Total Characters</h3>
+                  <p className="text-3xl font-bold text-[#6B7280]">{characters.length}</p>
                 </div>
-                <div className="p-6 bg-white/5 rounded-lg text-center">
-                  <h3 className="text-lg font-medium text-white mb-2">Total Messages</h3>
-                  <p className="text-3xl font-bold text-blue-400">{chatHistory.length}</p>
+                <div className="p-6 bg-[#F8F9FA] rounded-lg text-center">
+                  <h3 className="text-lg font-medium text-[#1F2937] mb-2">Total Messages</h3>
+                  <p className="text-3xl font-bold text-[#4B5563]">{chatHistory.length}</p>
                 </div>
-                <div className="p-6 bg-white/5 rounded-lg text-center">
-                  <h3 className="text-lg font-medium text-white mb-2">Active Conversations</h3>
-                  <p className="text-3xl font-bold text-green-400">
+                <div className="p-6 bg-[#F8F9FA] rounded-lg text-center">
+                  <h3 className="text-lg font-medium text-[#1F2937] mb-2">Active Conversations</h3>
+                  <p className="text-3xl font-bold text-[#374151]">
                     {new Set(chatHistory.map(m => m.characterId)).size}
                   </p>
                 </div>
               </div>
               
-              <div className="mt-8 p-6 bg-white/5 rounded-lg">
-                <h3 className="text-lg font-medium text-white mb-4">Recent Activity</h3>
+              <div className="mt-8 p-6 bg-[#F8F9FA] rounded-lg">
+                <h3 className="text-lg font-medium text-[#1F2937] mb-4">Recent Activity</h3>
                 <div className="space-y-3">
                   {chatHistory.slice(0, 5).map((message) => (
                     <div key={message.id} className="flex items-center space-x-3 text-sm">
-                      <span className="text-gray-400">{formatTime(message.createdAt)}</span>
-                      <span className="text-white">{message.character.name}</span>
-                      <span className="text-gray-300">
+                      <span className="text-[#6B7280]">{formatTime(message.createdAt)}</span>
+                      <span className="text-[#1F2937]">{message.character.name}</span>
+                      <span className="text-[#6B7280]">
                         {message.role === 'user' ? 'sent a message' : 'replied'}
                       </span>
                     </div>

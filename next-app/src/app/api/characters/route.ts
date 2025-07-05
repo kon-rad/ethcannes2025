@@ -39,12 +39,11 @@ export async function POST(req: NextRequest) {
       description,
       systemPrompt, 
       imageUrl, 
-      consultationCallPrice,
-      sponsorshipReelPrice,
-      exclusiveContentPrice, 
-      chatPrice, 
-      voicePrice, 
-      brandPromoPrice 
+      ownerWalletAddress,
+      exclusiveContentPrice,
+      chatPricePerMessage,
+      voicePricePerMinute,
+      brandPromoPrice
     } = await req.json()
 
     if (!name || !description || !systemPrompt) {
@@ -57,11 +56,10 @@ export async function POST(req: NextRequest) {
         description,
         systemPrompt,
         imageUrl,
-        consultationCallPrice,
-        sponsorshipReelPrice,
+        ownerWalletAddress,
         exclusiveContentPrice,
-        chatPrice,
-        voicePrice,
+        chatPricePerMessage,
+        voicePricePerMinute,
         brandPromoPrice,
         userId
       }

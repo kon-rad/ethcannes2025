@@ -29,13 +29,12 @@ model AICharacter {
   description            String
   systemPrompt           String
   imageUrl               String?
-  contractAddress        String? // Deployed smart contract address
-  consultationCallPrice  String? // Price per minute in cents (0 for free)
-  sponsorshipReelPrice   String? // Price for sponsorship reel in wei
-  exclusiveContentPrice  String? // Price in wei
-  chatPrice              String? // Price per message in wei
-  voicePrice             String? // Price per minute in wei
-  brandPromoPrice        String? // Price for brand promotions in wei
+  ownerWalletAddress     String       @default("0x0000000000000000000000000000000000000000") // Wallet address where payments will be sent
+  exclusiveContentPrice  Float        @default(0.0067) // Price in WLD for exclusive content (~$0.01 USD at ~$1.5/WLD)
+  chatPricePerMessage    Float        @default(0.00067) // Price per chat message (~$0.001 USD at ~$1.5/WLD)
+  voicePricePerMinute    Float        @default(0.0067) // Price per minute for voice calls (~$0.01 USD at ~$1.5/WLD)
+  brandPromoPrice        Float        @default(0.033) // Price for brand promotions (~$0.05 USD at ~$1.5/WLD)
+  contractAddress        String?      // Smart contract address for payments
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
   userId                 String
@@ -75,4 +74,6 @@ model Post {
   character   AICharacter? @relation(fields: [characterId], references: [id], onDelete: SetNull)
   
   @@map("posts")
-} 
+}
+
+ 

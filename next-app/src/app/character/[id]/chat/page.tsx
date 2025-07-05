@@ -10,13 +10,7 @@ interface Character {
   description: string
   systemPrompt: string
   imageUrl?: string
-  contractAddress?: string
-  consultationCallPrice?: string
-  sponsorshipReelPrice?: string
-  exclusiveContentPrice?: string
-  chatPrice?: string
-  voicePrice?: string
-  brandPromoPrice?: string
+  ownerWalletAddress: string
   createdAt: string
   user: {
     walletAddress: string
@@ -164,29 +158,29 @@ export default function CharacterChat() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3B82F6]"></div>
       </div>
     )
   }
 
   if (!character) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white">Character not found</div>
+      <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center">
+        <div className="text-[#1F2937]">Character not found</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-[#FFFFFF]">
       <div className="max-w-4xl mx-auto h-screen flex flex-col">
         {/* Header */}
-        <div className="bg-white/10 backdrop-blur-lg p-4 flex items-center justify-between">
+        <div className="bg-[#F8F9FA] backdrop-blur-lg p-4 flex items-center justify-between border-b border-[#9CA3AF]/20">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push(`/character/${params.id}`)}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="btn-ghost"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -200,8 +194,8 @@ export default function CharacterChat() {
               />
             )}
             <div>
-              <h1 className="text-xl font-bold text-white">{character.name}</h1>
-              <p className="text-gray-300 text-sm">{character.description}</p>
+              <h1 className="text-xl font-bold text-[#1F2937]">{character.name}</h1>
+              <p className="text-[#6B7280] text-sm">{character.description}</p>
             </div>
           </div>
         </div>
@@ -209,7 +203,7 @@ export default function CharacterChat() {
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center text-gray-400 mt-8">
+            <div className="text-center text-[#6B7280] mt-8">
               <p>Start a conversation with {character.name}!</p>
               <p className="text-sm mt-2">They're ready to chat with you.</p>
             </div>
@@ -222,13 +216,13 @@ export default function CharacterChat() {
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.role === 'user'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 text-white'
+                      ? 'bg-[#6B7280] text-white'
+                      : 'bg-[#F3F4F6] text-[#1F2937]'
                   }`}
                 >
                   <p className="text-sm">{message.content}</p>
                   <p className={`text-xs mt-1 ${
-                    message.role === 'user' ? 'text-purple-200' : 'text-gray-400'
+                    message.role === 'user' ? 'text-gray-200' : 'text-[#6B7280]'
                   }`}>
                     {formatTime(message.createdAt)}
                   </p>
@@ -238,11 +232,11 @@ export default function CharacterChat() {
           )}
           {sending && (
             <div className="flex justify-start">
-              <div className="bg-white/10 text-white max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
+              <div className="bg-[#F3F4F6] text-[#1F2937] max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-[#9CA3AF] rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
@@ -251,7 +245,7 @@ export default function CharacterChat() {
         </div>
 
         {/* Chat Input */}
-        <div className="bg-white/10 backdrop-blur-lg p-4">
+        <div className="bg-[#F8F9FA] backdrop-blur-lg p-4 border-t border-[#9CA3AF]/20">
           <div className="flex space-x-4">
             <div className="flex-1">
               <textarea
@@ -259,7 +253,7 @@ export default function CharacterChat() {
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={`Message ${character.name}...`}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                className="input resize-none"
                 rows={1}
                 disabled={sending}
               />
@@ -267,10 +261,10 @@ export default function CharacterChat() {
             <button
               onClick={sendMessage}
               disabled={!newMessage.trim() || sending}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors flex items-center space-x-2"
+              className=" flex items-center space-x-2"
             >
               {sending ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-[#F5F5F7] border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
