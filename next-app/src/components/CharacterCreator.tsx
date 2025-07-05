@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react'
 import { uploadToS3 } from '@/lib/s3'
 import { getWLDPriceInUSD } from '@/lib/worldcoin-pricing'
+import { MiniKit } from '@worldcoin/minikit-js'
 
 interface CharacterCreatorProps {
   onClose: () => void
   onCharacterCreated: () => void
+  user?: any // Add user prop to get current user's wallet address
 }
 
-export default function CharacterCreator({ onClose, onCharacterCreated }: CharacterCreatorProps) {
+export default function CharacterCreator({ onClose, onCharacterCreated, user }: CharacterCreatorProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [ethPrice, setEthPrice] = useState<number>(0)
   const [imagePreview, setImagePreview] = useState<string>('')
@@ -19,9 +21,6 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
     systemPrompt: '',
     ownerWalletAddress: '',
     exclusiveContentPrice: 0.0067,
-    chatPricePerMessage: 0.00067,
-    voicePricePerMinute: 0.0067,
-    brandPromoPrice: 0.033,
     image: null as File | null
   })
   const [wldPriceUSD, setWldPriceUSD] = useState<number | null>(null)
@@ -38,6 +37,22 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
     
     fetchWLDPrice()
   }, [])
+
+  // Auto-populate owner wallet address when user is available
+  useEffect(() => {
+    if (user?.walletAddress) {
+      setFormData(prev => ({ ...prev, ownerWalletAddress: user.walletAddress }))
+    } else {
+      // Fallback to MiniKit wallet address if available
+      try {
+        if (MiniKit.isInstalled() && (window as any).MiniKit?.walletAddress) {
+          setFormData(prev => ({ ...prev, ownerWalletAddress: (window as any).MiniKit.walletAddress }))
+        }
+      } catch (error) {
+        console.log('MiniKit not available for wallet address')
+      }
+    }
+  }, [user])
 
   const formatUSDEquivalent = (wldAmount: number) => {
     if (!wldPriceUSD) return '';
@@ -77,9 +92,9 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
         systemPrompt: formData.systemPrompt,
         ownerWalletAddress: formData.ownerWalletAddress,
         exclusiveContentPrice: formData.exclusiveContentPrice,
-        chatPricePerMessage: formData.chatPricePerMessage,
-        voicePricePerMinute: formData.voicePricePerMinute,
-        brandPromoPrice: formData.brandPromoPrice,
+        chatPricePerMessage: 0, // Set to 0 since we removed this field
+        voicePricePerMinute: 0, // Set to 0 since we removed this field
+        brandPromoPrice: 0, // Set to 0 since we removed this field
         imageUrl: imageUrl
       }
 
@@ -100,11 +115,8 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
           name: '',
           description: '',
           systemPrompt: '',
-          ownerWalletAddress: '',
+          ownerWalletAddress: user?.walletAddress || '',
           exclusiveContentPrice: 0.0067,
-          chatPricePerMessage: 0.00067,
-          voicePricePerMinute: 0.0067,
-          brandPromoPrice: 0.033,
           image: null
         })
         setImagePreview('')
@@ -118,8 +130,6 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
       setIsLoading(false)
     }
   }
-
-
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
@@ -167,21 +177,7 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
             />
           </div>
 
-          {/* System Prompt */}
-          <div>
-            <label htmlFor="systemPrompt" className="block text-sm font-medium text-[#1F2937] mb-2">
-              System Prompt *
-            </label>
-            <textarea
-              id="systemPrompt"
-              required
-              rows={4}
-              value={formData.systemPrompt}
-              onChange={(e) => setFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
-              className="input"
-              placeholder="Define how your AI character should behave and respond"
-            />
-          </div>
+
 
           {/* Image Upload */}
           <div>
@@ -210,10 +206,11 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
             </div>
           </div>
 
-          {/* Owner Wallet Address */}
+          {/* Payment Configuration */}
           <div className="border-t border-[#9CA3AF]/20 pt-4 sm:pt-6">
             <h3 className="text-lg sm:text-xl font-semibold text-[#1F2937] mb-4">Payment Configuration</h3>
             
+            {/* Owner Wallet Address */}
             <div className="mb-4">
               <label htmlFor="ownerWalletAddress" className="block text-sm font-medium text-[#1F2937] mb-2">
                 Owner Wallet Address *
@@ -232,87 +229,25 @@ export default function CharacterCreator({ onClose, onCharacterCreated }: Charac
               </p>
             </div>
 
-            {/* Pricing Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="exclusiveContentPrice" className="block text-sm font-medium text-[#1F2937] mb-2">
-                  Exclusive Content Price (WLD)
-                </label>
-                <input
-                  type="number"
-                  id="exclusiveContentPrice"
-                  step="0.001"
-                  min="0"
-                  required
-                  value={formData.exclusiveContentPrice}
-                  onChange={(e) => setFormData(prev => ({ ...prev, exclusiveContentPrice: parseFloat(e.target.value) || 0 }))}
-                  className="input"
-                  placeholder="0.0067"
-                />
-                <p className="text-[#6B7280] text-xs mt-1">
-                  Price for exclusive content access {formatUSDEquivalent(formData.exclusiveContentPrice)}
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="chatPricePerMessage" className="block text-sm font-medium text-[#1F2937] mb-2">
-                  Chat Price per Message (WLD)
-                </label>
-                <input
-                  type="number"
-                  id="chatPricePerMessage"
-                  step="0.001"
-                  min="0"
-                  required
-                  value={formData.chatPricePerMessage}
-                  onChange={(e) => setFormData(prev => ({ ...prev, chatPricePerMessage: parseFloat(e.target.value) || 0 }))}
-                  className="input"
-                  placeholder="0.00067"
-                />
-                <p className="text-[#6B7280] text-xs mt-1">
-                  Price per chat message {formatUSDEquivalent(formData.chatPricePerMessage)}
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="voicePricePerMinute" className="block text-sm font-medium text-[#1F2937] mb-2">
-                  Voice Price per Minute (WLD)
-                </label>
-                <input
-                  type="number"
-                  id="voicePricePerMinute"
-                  step="0.001"
-                  min="0"
-                  required
-                  value={formData.voicePricePerMinute}
-                  onChange={(e) => setFormData(prev => ({ ...prev, voicePricePerMinute: parseFloat(e.target.value) || 0 }))}
-                  className="input"
-                  placeholder="0.0067"
-                />
-                <p className="text-[#6B7280] text-xs mt-1">
-                  Price per minute for voice calls {formatUSDEquivalent(formData.voicePricePerMinute)}
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="brandPromoPrice" className="block text-sm font-medium text-[#1F2937] mb-2">
-                  Brand Promotion Price (WLD)
-                </label>
-                <input
-                  type="number"
-                  id="brandPromoPrice"
-                  step="0.001"
-                  min="0"
-                  required
-                  value={formData.brandPromoPrice}
-                  onChange={(e) => setFormData(prev => ({ ...prev, brandPromoPrice: parseFloat(e.target.value) || 0 }))}
-                  className="input"
-                  placeholder="0.033"
-                />
-                <p className="text-[#6B7280] text-xs mt-1">
-                  Price for brand promotions {formatUSDEquivalent(formData.brandPromoPrice)}
-                </p>
-              </div>
+            {/* Exclusive Content Price */}
+            <div>
+              <label htmlFor="exclusiveContentPrice" className="block text-sm font-medium text-[#1F2937] mb-2">
+                Exclusive Content Price (WLD) *
+              </label>
+              <input
+                type="number"
+                id="exclusiveContentPrice"
+                step="0.001"
+                min="0"
+                required
+                value={formData.exclusiveContentPrice}
+                onChange={(e) => setFormData(prev => ({ ...prev, exclusiveContentPrice: parseFloat(e.target.value) || 0 }))}
+                className="input"
+                placeholder="0.0067"
+              />
+              <p className="text-[#6B7280] text-xs mt-1">
+                Price for exclusive content access {formatUSDEquivalent(formData.exclusiveContentPrice)}
+              </p>
             </div>
           </div>
 

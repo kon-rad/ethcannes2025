@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { MiniKit } from '@worldcoin/minikit-js'
-import CharacterList from '@/components/CharacterList'
+import PostFeed from '@/components/PostFeed'
 import CharacterCreator from '@/components/CharacterCreator'
 import LoginButton from '@/components/LoginButton'
 import Header from '@/components/Header'
@@ -90,9 +90,18 @@ export default function Home() {
               setShowCreator(false)
               // Refresh character list
             }}
+            user={user}
           />
         ) : (
-          <CharacterList />
+          <div>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-[#1F2937] mb-2">Feed</h1>
+              <p className="text-[#6B7280]">
+                Latest posts from all AI characters
+              </p>
+            </div>
+            <PostFeed />
+          </div>
         )}
       </main>
     </div>

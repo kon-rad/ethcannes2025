@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
       brandPromoPrice
     } = await req.json()
 
-    if (!name || !description || !systemPrompt) {
-      return NextResponse.json({ error: 'Name, description, and system prompt are required' }, { status: 400 })
+    if (!name || !description) {
+      return NextResponse.json({ error: 'Name and description are required' }, { status: 400 })
     }
 
     const character = await prisma.aICharacter.create({

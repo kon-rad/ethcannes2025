@@ -76,9 +76,9 @@ export async function POST(request: NextRequest) {
       content: msg.content,
     }));
 
-    // Generate AI response
+    // Generate AI response using description instead of systemPrompt
     const aiResponse = await chatService.generateCharacterResponse(
-      character.systemPrompt,
+      character.description,
       message,
       aiMessages
     );

@@ -26,7 +26,6 @@ export class PromptGenerationService {
         systemPrompt = `You are an expert at writing engaging social media text posts. Create a compelling, authentic post that matches the character's personality and voice.`;
         userMessage = `Character name: ${characterData.name}
 Character description: ${characterData.description}
-Character system prompt: ${characterData.systemPrompt}
 ${additionalContext ? `Additional context: ${additionalContext}` : ''}
 
 ${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate an engaging social media post that reflects this character\'s personality and interests.'}`;
@@ -36,7 +35,6 @@ ${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate an engag
         systemPrompt = `You are an expert at writing detailed image generation prompts for social media posts. Create a comprehensive prompt for generating an image that captures the character's appearance, personality, and expertise in a way that's relevant to their brand and content style.`;
         userMessage = `Character name: ${characterData.name}
 Character description: ${characterData.description}
-Character system prompt: ${characterData.systemPrompt}
 ${additionalContext ? `Additional context: ${additionalContext}` : ''}
 
 ${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detailed image generation prompt for a social media post featuring this character that is relevant to their expertise and personality.'}`;
@@ -46,7 +44,6 @@ ${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detail
         systemPrompt = `You are an expert at writing video generation prompts. Create a detailed prompt for generating a short video that showcases the character's personality and activities.`;
         userMessage = `Character name: ${characterData.name}
 Character description: ${characterData.description}
-Character system prompt: ${characterData.systemPrompt}
 ${additionalContext ? `Additional context: ${additionalContext}` : ''}
 
 ${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detailed video generation prompt for a short clip featuring this character.'}`;
@@ -56,7 +53,6 @@ ${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detail
         systemPrompt = `You are an expert at writing engaging social media reel prompts. Create a compelling prompt for generating a short, viral-style reel that showcases the character's personality and interests.`;
         userMessage = `Character name: ${characterData.name}
 Character description: ${characterData.description}
-Character system prompt: ${characterData.systemPrompt}
 ${additionalContext ? `Additional context: ${additionalContext}` : ''}
 
 ${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detailed reel generation prompt for a short, engaging social media video featuring this character.'}`;

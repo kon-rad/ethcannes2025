@@ -10,13 +10,6 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    if (!userId && !characterId) {
-      return NextResponse.json(
-        { error: 'Either userId or characterId is required' },
-        { status: 400 }
-      );
-    }
-
     const where: any = {};
     if (userId) {
       where.userId = userId;

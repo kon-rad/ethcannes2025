@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface Post {
   id: string;
-  type: 'image' | 'text' | 'video';
+  type: string;
   content?: string;
   imageUrl?: string;
   title?: string;
@@ -23,199 +24,196 @@ interface Post {
 }
 
 interface PostFeedProps {
-  userId?: string;
   characterId?: string;
-  limit?: number;
 }
 
-export default function PostFeed({ userId, characterId, limit = 20 }: PostFeedProps) {
+export default function PostFeed({ characterId }: PostFeedProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
+  const router = useRouter();
 
-  const fetchPosts = async (reset = false) => {
+  useEffect(() => {
+    fetchPosts();
+  }, [characterId]);
+
+  const fetchPosts = async () => {
     try {
       setLoading(true);
-      const currentOffset = reset ? 0 : offset;
+      // Fetch posts - if characterId is provided, filter by that character
+      const url = characterId 
+        ? `/api/posts?characterId=${characterId}&limit=50`
+        : '/api/posts?limit=50';
       
-      const params = new URLSearchParams({
-        limit: limit.toString(),
-        offset: currentOffset.toString()
-      });
-
-      if (userId) {
-        params.append('userId', userId);
-      }
-      if (characterId) {
-        params.append('characterId', characterId);
-      }
-
-      const response = await fetch(`/api/posts?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch posts');
-      }
-
-      const data = await response.json();
-      
-      if (reset) {
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
         setPosts(data.posts);
-        setOffset(limit);
       } else {
-        setPosts(prev => [...prev, ...data.posts]);
-        setOffset(prev => prev + limit);
+        setError('Failed to fetch posts');
       }
-      
-      setHasMore(data.pagination.hasMore);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch posts');
+      setError('Failed to fetch posts');
+      console.error('Error fetching posts:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchPosts(true);
-  }, [userId, characterId]);
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
     if (diffInHours < 1) {
       return 'Just now';
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`;
+      return `${diffInHours}h ago`;
     } else {
-      return date.toLocaleDateString();
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}d ago`;
     }
   };
 
-  const shortenAddress = (address: string) => {
+  const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  if (error) {
+  const handleCharacterClick = (characterId: string) => {
+    router.push(`/character/${characterId}`);
+  };
+
+  if (loading) {
     return (
-      <div className="text-center py-6 sm:py-8 px-4">
-        <p className="text-red-500 text-sm sm:text-base">Error: {error}</p>
-        <button 
-          onClick={() => fetchPosts(true)}
-          className="mt-4 px-4 py-2 bg-blue-500 text-black rounded-lg hover:bg-blue-600 text-sm sm:text-base"
-        >
-          Retry
-        </button>
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1F2937]"></div>
       </div>
     );
   }
 
-  if (loading && posts.length === 0) {
+  if (error) {
     return (
-      <div className="text-center py-6 sm:py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600 text-sm sm:text-base">Loading posts...</p>
+      <div className="text-center py-12">
+        <p className="text-[#6B7280]">{error}</p>
+        <button 
+          onClick={fetchPosts}
+          className="mt-4 px-4 py-2 bg-[#1F2937] text-white rounded-lg hover:bg-[#374151] transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
   if (posts.length === 0) {
     return (
-      <div className="text-center py-6 sm:py-8">
-        <p className="text-gray-600 text-sm sm:text-base">No posts yet.</p>
+      <div className="text-center py-12">
+        <p className="text-[#6B7280] text-lg">No posts yet</p>
+        <p className="text-[#9CA3AF] text-sm mt-2">Be the first to create some content!</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
       {posts.map((post) => (
-        <div key={post.id} className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <div key={post.id} className="bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-sm hover:shadow-md transition-shadow">
           {/* Post Header */}
-          <div className="flex items-center mb-3 sm:mb-4">
-            <div className="flex-shrink-0">
-              {post.character?.imageUrl ? (
-                <Image
-                  src={post.character.imageUrl}
-                  alt={post.character.name}
-                  width={40}
-                  height={40}
-                  className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
-                />
+          <div className="flex flex-col space-y-2 mb-3">
+            <div className="flex items-center space-x-2">
+              {post.character ? (
+                <button
+                  onClick={() => handleCharacterClick(post.character!.id)}
+                  className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+                >
+                  {post.character.imageUrl ? (
+                    <Image
+                      src={post.character.imageUrl}
+                      alt={post.character.name}
+                      width={32}
+                      height={32}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-[#F3F4F6] rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  <div className="flex-1 min-w-0 text-left">
+                    <h3 className="font-semibold text-[#1F2937] text-sm truncate hover:text-[#374151] transition-colors">
+                      {post.character.name}
+                    </h3>
+                    <p className="text-[#6B7280] text-xs">
+                      {formatDate(post.createdAt)}
+                    </p>
+                  </div>
+                </button>
               ) : (
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 text-xs sm:text-sm">
-                    {post.user.walletAddress.slice(2, 4).toUpperCase()}
-                  </span>
-                </div>
+                <>
+                  <div className="w-8 h-8 bg-[#F3F4F6] rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-[#1F2937] text-sm truncate">
+                      Unknown Character
+                    </h3>
+                    <p className="text-[#6B7280] text-xs">
+                      {formatDate(post.createdAt)}
+                    </p>
+                  </div>
+                </>
               )}
             </div>
-            <div className="ml-3 flex-1 min-w-0">
-              <div className="flex items-center flex-wrap">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {post.character?.name || shortenAddress(post.user.walletAddress)}
-                </p>
-                {post.character && (
-                  <span className="ml-2 text-xs text-gray-500">
-                    by {shortenAddress(post.user.walletAddress)}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500">
-                {formatDate(post.createdAt)}
-              </p>
+            
+            <div className="text-[#6B7280] text-xs">
+              {formatAddress(post.user.walletAddress)}
             </div>
           </div>
 
           {/* Post Content */}
-          {post.title && (
-            <h3 className="text-base sm:text-lg font-semibold mb-2">{post.title}</h3>
-          )}
-          
-          {post.description && (
-            <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">{post.description}</p>
-          )}
-
-          {post.type === 'image' && post.imageUrl && (
-            <div className="mb-3 sm:mb-4">
-              <Image
-                src={post.imageUrl}
-                alt={post.title || 'Generated image'}
-                width={600}
-                height={400}
-                className="rounded-lg w-full h-auto"
-                style={{ objectFit: 'cover' }}
-              />
-            </div>
-          )}
-
-          {post.type === 'text' && post.content && (
-            <p className="text-gray-800 mb-3 sm:mb-4 whitespace-pre-wrap text-sm sm:text-base">{post.content}</p>
-          )}
-
-          {/* Post Footer */}
-          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500">
-            <span className="capitalize">{post.type} post</span>
-            {post.character && (
-              <span className="text-blue-600">@{post.character.name}</span>
+          <div className="space-y-2">
+            {post.title && (
+              <h4 className="text-sm font-semibold text-[#1F2937] line-clamp-2">{post.title}</h4>
             )}
+            
+            {post.content && (
+              <p className="text-[#374151] text-xs line-clamp-3 leading-relaxed">{post.content}</p>
+            )}
+            
+            {post.imageUrl && (
+              <div className="relative aspect-square">
+                <Image
+                  src={post.imageUrl}
+                  alt={post.description || 'Post image'}
+                  fill
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            )}
+            
+            {post.description && (
+              <p className="text-[#6B7280] text-xs line-clamp-2">{post.description}</p>
+            )}
+          </div>
+
+          {/* Post Type Badge */}
+          <div className="mt-3">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+              post.type === 'image' ? 'bg-blue-100 text-blue-800' :
+              post.type === 'video' ? 'bg-purple-100 text-purple-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+            </span>
           </div>
         </div>
       ))}
-
-      {/* Load More Button */}
-      {hasMore && (
-        <div className="text-center pt-4">
-          <button
-            onClick={() => fetchPosts(false)}
-            disabled={loading}
-            className="px-6 py-3 sm:py-2 bg-blue-500 text-black rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-          >
-            {loading ? 'Loading...' : 'Load More'}
-          </button>
-        </div>
-      )}
     </div>
   );
 } 

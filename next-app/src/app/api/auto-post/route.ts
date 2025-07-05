@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const characterData = {
       name: character.name,
       description: character.description,
-      systemPrompt: character.systemPrompt,
+      systemPrompt: '', // Use empty string since we're replacing with description
       imageUrl: character.imageUrl || undefined
     };
     const promptResponse = await promptGenerationService.generateAutoPostContent(characterData, postType);

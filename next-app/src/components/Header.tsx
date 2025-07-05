@@ -63,10 +63,22 @@ export default function Header({ user, onLogout, onCreateCharacter, isInWorldApp
                       {shortAddress}
                     </span>
                     {isInWorldApp && (
-                      <span className="text-[#22C55E] text-xs">🌍</span>
+                      <span className="text-[#22C55E] text-xs">🌍 World App</span>
                     )}
                   </div>
                 )}
+                
+                {/* Dashboard Button */}
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className=" flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                  </svg>
+                  <span className="hidden sm:inline">Dashboard</span>
+                </button>
                 
                 {/* AI Profile Hub Button */}
                 <button
@@ -159,6 +171,17 @@ export default function Header({ user, onLogout, onCreateCharacter, isInWorldApp
                 )}
                 
                 {/* Mobile Menu Items */}
+                <button
+                  onClick={() => handleNavigation('/dashboard')}
+                  className="w-full text-left  flex items-center space-x-3"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                  </svg>
+                  <span>Dashboard</span>
+                </button>
+                
                 <button
                   onClick={() => handleNavigation('/ai-profile')}
                   className="w-full text-left  flex items-center space-x-3"

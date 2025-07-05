@@ -32,7 +32,7 @@ export default function CharacterManagement() {
   const { address } = useWallet()
   const [character, setCharacter] = useState<Character | null>(null)
   const [loading, setLoading] = useState(true)
-
+  const [error, setError] = useState<string | null>(null)
 
   const [user, setUser] = useState<any>(null)
   const [imagePrompt, setImagePrompt] = useState('')
@@ -53,6 +53,7 @@ export default function CharacterManagement() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [processingPayment, setProcessingPayment] = useState(false)
   const [wldPriceUSD, setWldPriceUSD] = useState<number | null>(null)
+  const [isOwner, setIsOwner] = useState(false)
 
 
 
@@ -98,16 +99,21 @@ export default function CharacterManagement() {
 
   const fetchCharacter = async () => {
     try {
-      const response = await fetch(`/api/characters/${params.id}`)
+      const response = await fetch(`/api/characters/public/${params.id}`)
       if (response.ok) {
         const data = await response.json()
         setCharacter(data)
+        
+        // Check if current user is the owner
+        if (user && data.userId === user.id) {
+          setIsOwner(true)
+        }
       } else {
-        router.push('/')
+        setError('Character not found')
       }
     } catch (error) {
       console.error('Error fetching character:', error)
-      router.push('/')
+      setError('Failed to fetch character')
     } finally {
       setLoading(false)
     }
@@ -266,7 +272,7 @@ export default function CharacterManagement() {
     setEditFormData({
       name: character.name,
       description: character.description,
-      systemPrompt: character.systemPrompt,
+      systemPrompt: '', // Set to empty string since we're not using it
       ownerWalletAddress: character.ownerWalletAddress,
       exclusiveContentPrice: character.exclusiveContentPrice,
       chatPricePerMessage: character.chatPricePerMessage,
@@ -382,8 +388,8 @@ export default function CharacterManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F2937]"></div>
       </div>
     )
   }
@@ -407,11 +413,11 @@ export default function CharacterManagement() {
               <p className="text-[#6B7280] mt-2 text-sm sm:text-base">{character.description}</p>
             </div>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-              {!isEditingCharacter && (
-                <button
-                  onClick={startEditing}
-                  className=" flex items-center justify-center space-x-2"
-                >
+              {isOwner && !isEditingCharacter && (
+                              <button
+                onClick={startEditing}
+                className="btn-primary flex items-center justify-center space-x-2"
+              >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
@@ -497,121 +503,139 @@ export default function CharacterManagement() {
             )}
           </div>
 
-          {/* Image Generation Section */}
-          {!isEditingCharacter && (
+          {/* Image Generation Section - Owner Only */}
+          {isOwner && !isEditingCharacter && (
             <div className="mb-6 sm:mb-8">
-                          <h3 className="text-lg sm:text-xl font-semibold text-[#1F2937] mb-4">
-              Generate Image Posts
-            </h3>
-            <div className="space-y-4">
-                          <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
-              <p className="text-[#1F2937] text-xs sm:text-sm">
-                📸 <strong>Image Posts:</strong> Generate images that will be saved as posts in your character's feed. This does NOT change your character's avatar/profile image.
-              </p>
-            </div>
-              {character.imageUrl && (
+              <h3 className="text-lg sm:text-xl font-semibold text-[#1F2937] mb-4">
+                Generate Image Posts
+              </h3>
+              <div className="space-y-4">
                 <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
                   <p className="text-[#1F2937] text-xs sm:text-sm">
-                    💡 <strong>FLUX.1 Kontext Mode:</strong> This will use your existing image as a reference to generate a new variation. If FLUX.1 Kontext fails, it will automatically fallback to FLUX.1 Dev.
+                    📸 <strong>Image Posts:</strong> Generate images that will be saved as posts in your character's feed. This does NOT change your character's avatar/profile image.
                   </p>
                 </div>
-              )}
-              {!character.imageUrl && (
-                <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
-                  <p className="text-[#1F2937] text-xs sm:text-sm">
-                    🎨 <strong>Initial Generation:</strong> Creating your first character image using FLUX.1 Dev.
-                  </p>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-[#1F2937] mb-2">
-                  Image Prompt (Optional)
-                </label>
-                <textarea
-                  value={imagePrompt}
-                  onChange={(e) => setImagePrompt(e.target.value)}
-                  placeholder={`Create a new social media post image featuring ${character.name} that's relevant to their expertise: ${character.description}. Leave empty for auto-generated on-brand content.`}
-                  className="w-full px-3 sm:px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280] text-sm sm:text-base"
-                  rows={3}
-                  disabled={generatingImage}
-                />
-                <p className="text-[#6B7280] text-xs mt-1">
-                  Leave empty to use auto-generated on-brand prompt based on character's expertise
-                </p>
-              </div>
-              <button
-                onClick={generateNewImage}
-                disabled={generatingImage}
-                className="w-full sm:w-auto  flex items-center justify-center space-x-2"
-              >
-                {generatingImage ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>{character.imageUrl ? 'Generate New Post Image' : 'Generate Initial Post Image'}</span>
-                  </>
+                {character.imageUrl && (
+                  <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
+                    <p className="text-[#1F2937] text-xs sm:text-sm">
+                      💡 <strong>FLUX.1 Kontext Mode:</strong> This will use your existing image as a reference to generate a new variation. If FLUX.1 Kontext fails, it will automatically fallback to FLUX.1 Dev.
+                    </p>
+                  </div>
                 )}
-              </button>
+                {!character.imageUrl && (
+                  <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
+                    <p className="text-[#1F2937] text-xs sm:text-sm">
+                      🎨 <strong>Initial Generation:</strong> Creating your first character image using FLUX.1 Dev.
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-[#1F2937] mb-2">
+                    Image Prompt (Optional)
+                  </label>
+                  <textarea
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    placeholder={`Create a new social media post image featuring ${character.name} that's relevant to their expertise: ${character.description}. Leave empty for auto-generated on-brand content.`}
+                    className="w-full px-3 sm:px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280] text-sm sm:text-base"
+                    rows={3}
+                    disabled={generatingImage}
+                  />
+                  <p className="text-[#6B7280] text-xs mt-1">
+                    Leave empty to use auto-generated on-brand prompt based on character's expertise
+                  </p>
+                </div>
+                <button
+                  onClick={generateNewImage}
+                  disabled={generatingImage}
+                  className="w-full sm:w-auto btn-primary flex items-center justify-center space-x-2"
+                >
+                  {generatingImage ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>{character.imageUrl ? 'Generate New Post Image' : 'Generate Initial Post Image'}</span>
+                    </>
+                  )}
+                </button>
+                
+                {/* Chat Button */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => router.push(`/character/${params.id}/chat`)}
+                    className="w-full sm:w-auto btn-secondary flex items-center justify-center space-x-2"
+                  >
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span>Chat with {character.name}</span>
+                  </button>
+                </div>
+
+                {/* Exclusive Content Payment Button - Owner Only */}
+                <div className="mt-4">
+                  <button
+                    onClick={payForExclusiveContent}
+                    disabled={processingPayment}
+                    className="w-full sm:w-auto bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-[#6B7280] text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+                  >
+                    {processingPayment ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Processing Payment...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>
+                          Pay {character.exclusiveContentPrice} WLD 
+                          {wldPriceUSD && (
+                            <span className="text-xs opacity-75">
+                              {' '}(~${(character.exclusiveContentPrice * wldPriceUSD).toFixed(2)} USD)
+                            </span>
+                          )}
+                          {' '}for Exclusive Content
+                        </span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[#6B7280] text-xs mt-1">
+                    Get access to premium content and features from {character.name}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Non-Owner View - Show character info and chat option */}
+        {!isOwner && !isEditingCharacter && (
+          <div className="mb-6 sm:mb-8">
+            <div className="p-4 bg-[#F3F4F6] rounded-lg">
+              <h3 className="text-lg font-semibold text-[#1F2937] mb-4">About {character.name}</h3>
+              <p className="text-[#374151] text-sm mb-4">{character.description}</p>
               
-              {/* Chat Button */}
               <div className="mt-4">
                 <button
                   onClick={() => router.push(`/character/${params.id}/chat`)}
-                  className="w-full sm:w-auto btn-secondary flex items-center justify-center space-x-2"
+                  className="w-full btn-primary flex items-center justify-center space-x-2"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   <span>Chat with {character.name}</span>
                 </button>
               </div>
-
-              {/* Exclusive Content Payment Button */}
-              <div className="mt-4">
-                <button
-                  onClick={payForExclusiveContent}
-                  disabled={processingPayment}
-                  className="w-full sm:w-auto bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-[#6B7280] text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
-                >
-                  {processingPayment ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Processing Payment...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>
-                        Pay {character.exclusiveContentPrice} WLD 
-                        {wldPriceUSD && (
-                          <span className="text-xs opacity-75">
-                            {' '}(~${(character.exclusiveContentPrice * wldPriceUSD).toFixed(2)} USD)
-                          </span>
-                        )}
-                        {' '}for Exclusive Content
-                      </span>
-                    </>
-                  )}
-                </button>
-                <p className="text-[#6B7280] text-xs mt-1">
-                  Get access to premium content and features from {character.name}
-                </p>
-              </div>
-
-
             </div>
           </div>
-          )}
-
-
+        )}
 
           {/* Character Details Edit Form */}
           {isEditingCharacter && (
@@ -642,18 +666,7 @@ export default function CharacterManagement() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#1F2937] mb-2">
-                  System Prompt
-                </label>
-                <textarea
-                  value={editFormData.systemPrompt}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                  className="w-full px-3 sm:px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6B7280] text-sm sm:text-base"
-                  rows={6}
-                  placeholder="Enter system prompt for AI behavior"
-                />
-              </div>
+
 
               <div>
                 <label className="block text-sm font-medium text-[#1F2937] mb-2">
@@ -772,15 +785,7 @@ export default function CharacterManagement() {
 
 
 
-          {/* System Prompt */}
-          {!isEditingCharacter && (
-            <div className="mb-6 sm:mb-8">
-              <h3 className="text-lg sm:text-xl font-semibold text-[#1F2937] mb-4">System Prompt</h3>
-              <div className="p-3 sm:p-4 bg-[#F3F4F6] rounded-lg">
-                <p className="text-[#374151] text-xs sm:text-sm whitespace-pre-wrap">{character.systemPrompt}</p>
-              </div>
-            </div>
-          )}
+
 
           {/* Statistics */}
           {!isEditingCharacter && (
