@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useWallet } from '@/hooks/useWallet'
 
 interface Character {
@@ -33,6 +33,7 @@ interface ChatMessage {
 export default function CharacterChat() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const { address } = useWallet()
   const [character, setCharacter] = useState<Character | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -250,32 +251,27 @@ export default function CharacterChat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Chat Input */}
-        <div className="bg-white/10 backdrop-blur-lg p-4">
+        {/* Input Area */}
+        <div className="bg-white/5 backdrop-blur-lg p-4 border-t border-white/10">
           <div className="flex space-x-4">
-            <div className="flex-1">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={`Message ${character.name}...`}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                rows={1}
-                disabled={sending}
-              />
-            </div>
+            <textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+              placeholder={`Message ${character.name}...`}
+              rows={1}
+            />
             <button
               onClick={sendMessage}
               disabled={!newMessage.trim() || sending}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors flex items-center space-x-2"
+              className={`${
+                !newMessage.trim() || sending
+                  ? 'bg-purple-500 cursor-not-allowed'
+                  : 'bg-purple-600 hover:bg-purple-700'
+              } text-white px-4 py-2 rounded-lg transition-colors`}
             >
-              {sending ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              )}
+              Send
             </button>
           </div>
         </div>

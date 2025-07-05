@@ -13,6 +13,7 @@ export class TogetherAiService {
   private client: Together;
 
   constructor() {
+    console.log(process.env.TOGETHER_API_KEY);
     if (!process.env.TOGETHER_API_KEY) {
       console.error('TOGETHER_API_KEY is not set in environment variables');
       console.error('Please create a .env.local file in the next-app directory with:');

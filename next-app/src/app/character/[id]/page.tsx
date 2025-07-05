@@ -55,6 +55,12 @@ export default function CharacterManagement() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [autoPosting, setAutoPosting] = useState(false)
   const [postType, setPostType] = useState<'social' | 'professional' | 'casual' | 'creative'>('social')
+  const [testingSearch, setTestingSearch] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState('')
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [testingTopics, setTestingTopics] = useState(false)
+  const [topicResults, setTopicResults] = useState<string[]>([])
 
   useEffect(() => {
     checkAuthStatus()
@@ -220,8 +226,17 @@ export default function CharacterManagement() {
         alert(`Auto post created successfully!\n\nTitle: ${data.title}\nDescription: ${data.description}`)
         // The posts feed will update automatically, no need to refresh
       } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create auto post')
+        // 检查内容类型是否为JSON
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to create auto post')
+        } else {
+          // 非JSON响应，获取状态码和文本
+          const statusText = response.statusText
+          const status = response.status
+          throw new Error(`Server error (${status}): ${statusText || 'Unknown error'}`)
+        }
       }
     } catch (error) {
       console.error('Error creating auto post:', error)
@@ -351,6 +366,74 @@ export default function CharacterManagement() {
     } catch (error) {
       console.error('Error updating character:', error)
       alert(`Failed to update character: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const testSearch = async () => {
+    if (!searchQuery.trim() || testingSearch) return
+    
+    setTestingSearch(true)
+    setSearchResults('')
+    setShowSearchResults(true)
+    
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: params.id,
+          query: searchQuery,
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSearchResults(data.results || 'Search successful, but no results returned')
+      } else {
+        const errorText = await response.text()
+        throw new Error(errorText || response.statusText)
+      }
+    } catch (error) {
+      console.error('search functionality failed:', error)
+      setSearchResults(`Search error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setTestingSearch(false)
+    }
+  }
+
+  const testTopics = async () => {
+    if (testingTopics) return
+    
+    setTestingTopics(true)
+    setTopicResults([])
+    
+    try {
+      const response = await fetch('/api/topics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: params.id,
+          topicCount: 5,
+          format: 'list',
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTopicResults(data.topics || [])
+      } else {
+        const errorText = await response.text()
+        throw new Error(errorText || response.statusText)
+      }
+    } catch (error) {
+      console.error('topic generation failed:', error)
+      setTopicResults([`Generation error: ${error instanceof Error ? error.message : 'Unknown error'}`])
+    } finally {
+      setTestingTopics(false)
     }
   }
 
@@ -547,6 +630,106 @@ export default function CharacterManagement() {
               </div>
             </div>
           </div>
+          )}
+
+          {/* Test AI Services Section */}
+          {!isEditingCharacter && (
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-white mb-4">
+                Test AI Services
+              </h3>
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-900/20 rounded-lg">
+                  <p className="text-blue-300 text-sm">
+                    🧪 <strong>AI Testing Tools:</strong> Test various AI services including web search and topic generation. These tools help your character gather real-time information.
+                  </p>
+                </div>
+                
+                {/* Tavily Search Test */}
+                <div className="p-4 bg-blue-900/20 rounded-lg">
+                  <h4 className="text-white font-medium mb-2">Test Tavily Search</h4>
+                  <div className="flex space-x-2 mb-2">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none"
+                      placeholder="Enter search keywords..."
+                    />
+                    <button
+                      onClick={testSearch}
+                      disabled={!searchQuery.trim() || testingSearch}
+                      className={`${
+                        !searchQuery.trim() || testingSearch
+                          ? 'bg-blue-500 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      } text-white px-4 py-2 rounded-lg transition-colors`}
+                    >
+                      {testingSearch ? 'Searching...' : 'Search'}
+                    </button>
+                  </div>
+                  {showSearchResults && (
+                    <div className="bg-white/10 rounded-lg p-3 mt-2">
+                      {searchResults ? (
+                        <p className="text-sm text-white whitespace-pre-wrap max-h-60 overflow-y-auto">
+                          {searchResults}
+                        </p>
+                      ) : (
+                        testingSearch ? (
+                          <div className="flex justify-center items-center py-4">
+                            <div className="w-6 h-6 border-2 border-blue-300 border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-300">Search results will appear here</p>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Topic Generation Section */}
+                <div className="p-4 bg-green-900/20 rounded-lg">
+                  <h4 className="text-white font-medium mb-2">Test Topic Summary Generation</h4>
+                  <div className="flex mb-2">
+                    <button
+                      onClick={testTopics}
+                      disabled={testingTopics}
+                      className={`${
+                        testingTopics
+                          ? 'bg-green-500 cursor-not-allowed'
+                          : 'bg-green-600 hover:bg-green-700'
+                      } text-white px-4 py-2 rounded-lg transition-colors w-full flex items-center justify-center space-x-2`}
+                    >
+                      {testingTopics ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          <span>Generate Topic Summary</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {topicResults.length > 0 && (
+                    <div className="bg-white/10 rounded-lg p-3 mt-2">
+                      <ul className="list-disc list-inside text-white">
+                        {topicResults.map((topic, index) => (
+                          <li key={index} className="text-sm mb-1">{topic}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 italic mt-2">
+                    Note: You must first use the search function to get content before generating topic summaries
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Auto Post Section */}
