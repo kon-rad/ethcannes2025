@@ -14,6 +14,7 @@ interface User {
     name: string;
     description: string;
     imageUrl?: string;
+    systemPrompt: string;
   }>;
 }
 
@@ -23,6 +24,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'posts' | 'characters'>('posts');
+  const [imagePrompts, setImagePrompts] = useState<{ [key: string]: string }>({});
+  const [reelPrompts, setReelPrompts] = useState<{ [key: string]: string }>({});
+  const [generatingImage, setGeneratingImage] = useState<{ [key: string]: boolean }>({});
+  const [generatingReel, setGeneratingReel] = useState<{ [key: string]: boolean }>({});
 
   const userId = searchParams.get('userId');
   const walletAddress = searchParams.get('walletAddress');
@@ -63,6 +68,77 @@ export default function ProfilePage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const generateNewImage = async (character: any) => {
+    if (!user) return;
+
+    setGeneratingImage(prev => ({ ...prev, [character.id]: true }));
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: character.id,
+          characterName: character.name,
+          characterDescription: character.description,
+          prompt: imagePrompts[character.id] || undefined,
+          existingImageUrl: character.imageUrl || undefined,
+          userId: user.id
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setImagePrompts(prev => ({ ...prev, [character.id]: '' }));
+        alert('New image generated and posted successfully!');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate image');
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate image: ${errorMessage}`);
+    } finally {
+      setGeneratingImage(prev => ({ ...prev, [character.id]: false }));
+    }
+  };
+
+  const generateNewReel = async (character: any) => {
+    if (!user) return;
+
+    setGeneratingReel(prev => ({ ...prev, [character.id]: true }));
+    try {
+      const response = await fetch('/api/generate-reel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: character.id,
+          customPrompt: reelPrompts[character.id] || undefined,
+          userId: user.id
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setReelPrompts(prev => ({ ...prev, [character.id]: '' }));
+        alert('Reel generated successfully! Check the console for debugging information.');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate reel');
+      }
+    } catch (error) {
+      console.error('Error generating reel:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate reel: ${errorMessage}`);
+    } finally {
+      setGeneratingReel(prev => ({ ...prev, [character.id]: false }));
+    }
   };
 
   if (loading) {
@@ -148,26 +224,106 @@ export default function ProfilePage() {
         {activeTab === 'posts' ? (
           <PostFeed userId={user.id} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {user.characters.map((character) => (
               <div key={character.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                {character.imageUrl && (
-                  <div className="aspect-square relative">
-                    <Image
-                      src={character.imageUrl}
-                      alt={character.name}
-                      fill
-                      className="object-cover"
-                    />
+                <div className="flex">
+                  {/* Character Image */}
+                  <div className="w-48 h-48 flex-shrink-0">
+                    {character.imageUrl ? (
+                      <Image
+                        src={character.imageUrl}
+                        alt={character.name}
+                        width={192}
+                        height={192}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">No Image</span>
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {character.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm line-clamp-3">
-                    {character.description}
-                  </p>
+
+                  {/* Character Info and Actions */}
+                  <div className="flex-1 p-6">
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        {character.name}
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        {character.description}
+                      </p>
+                    </div>
+
+                    {/* Generate Image Section */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">Generate Image Post</h4>
+                      <div className="space-y-2">
+                        <textarea
+                          value={imagePrompts[character.id] || ''}
+                          onChange={(e) => setImagePrompts(prev => ({ ...prev, [character.id]: e.target.value }))}
+                          placeholder={`Create a new social media post image featuring ${character.name} that's relevant to their expertise: ${character.description}. Leave empty for auto-generated on-brand content.`}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={2}
+                          disabled={generatingImage[character.id]}
+                        />
+                        <button
+                          onClick={() => generateNewImage(character)}
+                          disabled={generatingImage[character.id]}
+                          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm transition-colors flex items-center space-x-2"
+                        >
+                          {generatingImage[character.id] ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Generating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span>Generate Image</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Generate Reel Section */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">Generate Reel</h4>
+                      <div className="space-y-2">
+                        <textarea
+                          value={reelPrompts[character.id] || ''}
+                          onChange={(e) => setReelPrompts(prev => ({ ...prev, [character.id]: e.target.value }))}
+                          placeholder={`Optional prompt for reel generation. Leave empty for auto-generated prompt.`}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={2}
+                          disabled={generatingReel[character.id]}
+                        />
+                        <button
+                          onClick={() => generateNewReel(character)}
+                          disabled={generatingReel[character.id]}
+                          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm transition-colors flex items-center space-x-2"
+                        >
+                          {generatingReel[character.id] ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Generating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              <span>Generate Reel</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

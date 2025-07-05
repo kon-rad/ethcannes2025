@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { MiniKit } from '@worldcoin/minikit-js'
 import CharacterList from '@/components/CharacterList'
 import CharacterCreator from '@/components/CharacterCreator'
 import LoginButton from '@/components/LoginButton'
@@ -10,9 +11,17 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [showCreator, setShowCreator] = useState(false)
+  const [isInWorldApp, setIsInWorldApp] = useState(false)
 
   useEffect(() => {
-    // Check if user is authenticated on mount
+    // Check if we're running in World App
+    const checkWorldApp = () => {
+      const installed = MiniKit.isInstalled()
+      setIsInWorldApp(installed)
+      console.log('MiniKit installed:', installed)
+    }
+
+    checkWorldApp()
     checkAuthStatus()
   }, [])
 
@@ -52,6 +61,7 @@ export default function Home() {
           <p className="text-gray-300 mb-8">
             Create AI characters and monetize exclusive content with World App
           </p>
+          
           <LoginButton onLogin={handleLogin} />
         </div>
       </div>
@@ -60,7 +70,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <Header user={user} onLogout={handleLogout} onCreateCharacter={() => setShowCreator(true)} />
+      <Header 
+        user={user} 
+        onLogout={handleLogout} 
+        onCreateCharacter={() => setShowCreator(true)}
+        isInWorldApp={isInWorldApp}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {showCreator ? (

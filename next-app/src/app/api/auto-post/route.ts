@@ -43,16 +43,17 @@ export async function POST(request: NextRequest) {
       postType
     });
 
-    // Step 1: Generate image prompt using LLM
-    console.log('Step 1: Generating image prompt...');
-    const promptResponse = await promptGenerationService.generateImagePrompt({
-      characterName: character.name,
-      characterDescription: character.description,
+    // Step 1: Generate auto post content using LLM
+    console.log('Step 1: Generating auto post content...');
+    const characterData = {
+      name: character.name,
+      description: character.description,
       systemPrompt: character.systemPrompt,
-      postType
-    });
+      imageUrl: character.imageUrl || undefined
+    };
+    const promptResponse = await promptGenerationService.generateAutoPostContent(characterData, postType);
 
-    console.log('Generated prompt:', promptResponse);
+    console.log('Generated auto post content:', promptResponse);
 
     // Step 2: Generate image using the prompt
     console.log('Step 2: Generating image...');

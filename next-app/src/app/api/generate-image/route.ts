@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       // Generate image with custom prompt
       finalPrompt = prompt;
       console.log('Using custom prompt:', finalPrompt);
+      console.log('Condition image for custom prompt:', existingImageUrl);
       const response = await imageGenerationService.generateImages({
         prompt: finalPrompt,
         steps,
@@ -61,8 +62,11 @@ export async function POST(request: NextRequest) {
       if (characterId) {
         if (existingImageUrl) {
           // Use FLUX.1 Kontext with conditional image
-          finalPrompt = `Professional headshot of ${characterName}, ${characterDescription}, high quality, detailed, professional lighting, studio background`;
+          // Create a more relevant, on-brand prompt based on the character's personality
+          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Kontext with condition image. Prompt:', finalPrompt);
+          console.log('Character avatar URL for condition:', existingImageUrl);
           imageUrl = await imageGenerationService.generateAndUploadCharacterImage(
             characterId,
             characterName,
@@ -73,7 +77,8 @@ export async function POST(request: NextRequest) {
           usedModel = 'black-forest-labs/FLUX.1-kontext-dev'; // This might have fallen back
         } else {
           // Generate initial image without conditional image
-          finalPrompt = `Professional headshot of ${characterName}, ${characterDescription}, high quality, detailed, professional lighting, studio background`;
+          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Dev for initial image. Prompt:', finalPrompt);
           const base64Image = await imageGenerationService.generateInitialCharacterImage(
             characterName,
@@ -86,7 +91,8 @@ export async function POST(request: NextRequest) {
       } else {
         // Fallback to base64 image if no characterId provided
         if (existingImageUrl) {
-          finalPrompt = `Professional headshot of ${characterName}, ${characterDescription}, high quality, detailed, professional lighting, studio background`;
+          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Kontext without characterId. Prompt:', finalPrompt);
           imageUrl = await imageGenerationService.generateCharacterImage(
             characterName,
@@ -96,7 +102,8 @@ export async function POST(request: NextRequest) {
           );
           usedModel = 'black-forest-labs/FLUX.1-kontext-dev'; // This might have fallen back
         } else {
-          finalPrompt = `Professional headshot of ${characterName}, ${characterDescription}, high quality, detailed, professional lighting, studio background`;
+          const defaultPrompt = prompt || `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+          finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Dev without characterId. Prompt:', finalPrompt);
           imageUrl = await imageGenerationService.generateInitialCharacterImage(
             characterName,

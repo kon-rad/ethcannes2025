@@ -8,9 +8,10 @@ interface HeaderProps {
   user?: any
   onLogout: () => void
   onCreateCharacter?: () => void
+  isInWorldApp?: boolean
 }
 
-export default function Header({ user, onLogout, onCreateCharacter }: HeaderProps) {
+export default function Header({ user, onLogout, onCreateCharacter, isInWorldApp }: HeaderProps) {
   const { isConnected, address } = useWallet()
   const router = useRouter()
   const [shortAddress, setShortAddress] = useState('')
@@ -47,6 +48,9 @@ export default function Header({ user, onLogout, onCreateCharacter }: HeaderProp
                     <span className="text-white text-sm font-medium">
                       {shortAddress}
                     </span>
+                    {isInWorldApp && (
+                      <span className="text-green-400 text-xs">🌍</span>
+                    )}
                   </div>
                 )}
                 

@@ -504,13 +504,13 @@ export default function CharacterManagement() {
                 <textarea
                   value={imagePrompt}
                   onChange={(e) => setImagePrompt(e.target.value)}
-                  placeholder={`Professional headshot of ${character.name}, ${character.description}, high quality, detailed, professional lighting, studio background`}
+                  placeholder={`Create a new social media post image featuring ${character.name} that's relevant to their expertise: ${character.description}. Leave empty for auto-generated on-brand content.`}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   rows={3}
                   disabled={generatingImage}
                 />
                 <p className="text-gray-400 text-xs mt-1">
-                  Leave empty to use default prompt based on character description
+                  Leave empty to use auto-generated on-brand prompt based on character's expertise
                 </p>
               </div>
               <button

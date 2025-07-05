@@ -1,151 +1,159 @@
-import Together from 'together-ai';
+import { summarizeWithAI } from './aiService';
 
-export interface PromptGenerationRequest {
-  characterName: string;
-  characterDescription: string;
+export interface CharacterData {
+  name: string;
+  description: string;
   systemPrompt: string;
-  postType?: 'social' | 'professional' | 'casual' | 'creative';
+  imageUrl?: string;
 }
 
-export interface PromptGenerationResponse {
-  imagePrompt: string;
-  postTitle?: string;
-  postDescription?: string;
+export interface PromptGenerationInput {
+  characterData: CharacterData;
+  contentType: 'text' | 'image' | 'video' | 'reel';
+  customPrompt?: string;
+  additionalContext?: string;
 }
 
 export class PromptGenerationService {
-  private client: Together;
+  async generatePrompt(input: PromptGenerationInput): Promise<string> {
+    const { characterData, contentType, customPrompt, additionalContext } = input;
 
-  constructor() {
-    if (!process.env.TOGETHER_API_KEY) {
-      throw new Error('TOGETHER_API_KEY is not set in environment variables');
+    let systemPrompt: string;
+    let userMessage: string;
+
+    switch (contentType) {
+      case 'text':
+        systemPrompt = `You are an expert at writing engaging social media text posts. Create a compelling, authentic post that matches the character's personality and voice.`;
+        userMessage = `Character name: ${characterData.name}
+Character description: ${characterData.description}
+Character system prompt: ${characterData.systemPrompt}
+${additionalContext ? `Additional context: ${additionalContext}` : ''}
+
+${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate an engaging social media post that reflects this character\'s personality and interests.'}`;
+        break;
+
+      case 'image':
+        systemPrompt = `You are an expert at writing detailed image generation prompts for social media posts. Create a comprehensive prompt for generating an image that captures the character's appearance, personality, and expertise in a way that's relevant to their brand and content style.`;
+        userMessage = `Character name: ${characterData.name}
+Character description: ${characterData.description}
+Character system prompt: ${characterData.systemPrompt}
+${additionalContext ? `Additional context: ${additionalContext}` : ''}
+
+${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detailed image generation prompt for a social media post featuring this character that is relevant to their expertise and personality.'}`;
+        break;
+
+      case 'video':
+        systemPrompt = `You are an expert at writing video generation prompts. Create a detailed prompt for generating a short video that showcases the character's personality and activities.`;
+        userMessage = `Character name: ${characterData.name}
+Character description: ${characterData.description}
+Character system prompt: ${characterData.systemPrompt}
+${additionalContext ? `Additional context: ${additionalContext}` : ''}
+
+${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detailed video generation prompt for a short clip featuring this character.'}`;
+        break;
+
+      case 'reel':
+        systemPrompt = `You are an expert at writing engaging social media reel prompts. Create a compelling prompt for generating a short, viral-style reel that showcases the character's personality and interests.`;
+        userMessage = `Character name: ${characterData.name}
+Character description: ${characterData.description}
+Character system prompt: ${characterData.systemPrompt}
+${additionalContext ? `Additional context: ${additionalContext}` : ''}
+
+${customPrompt ? `Custom prompt direction: ${customPrompt}` : 'Generate a detailed reel generation prompt for a short, engaging social media video featuring this character.'}`;
+        break;
+
+      default:
+        throw new Error(`Unsupported content type: ${contentType}`);
     }
-    this.client = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+
+    try {
+      const generatedPrompt = await summarizeWithAI({
+        systemPrompt,
+        userMessage
+      });
+
+      return generatedPrompt;
+    } catch (error) {
+      console.error('Error generating prompt:', error);
+      throw new Error(`Failed to generate ${contentType} prompt`);
+    }
   }
 
-  async generateImagePrompt({
-    characterName,
-    characterDescription,
-    systemPrompt,
-    postType = 'social'
-  }: PromptGenerationRequest): Promise<PromptGenerationResponse> {
+  async generateTextPrompt(characterData: CharacterData, customPrompt?: string, additionalContext?: string): Promise<string> {
+    return this.generatePrompt({
+      characterData,
+      contentType: 'text',
+      customPrompt,
+      additionalContext
+    });
+  }
+
+  async generateImagePrompt(characterData: CharacterData, customPrompt?: string, additionalContext?: string): Promise<string> {
+    return this.generatePrompt({
+      characterData,
+      contentType: 'image',
+      customPrompt,
+      additionalContext
+    });
+  }
+
+  async generateAutoPostContent(characterData: CharacterData, postType: string): Promise<{
+    imagePrompt: string;
+    postTitle: string;
+    postDescription: string;
+  }> {
     try {
-      console.log('Prompt Generation Service - Input Parameters:', {
-        characterName,
-        characterDescription,
-        postType
+      // Generate image prompt
+      const imagePrompt = await this.generatePrompt({
+        characterData,
+        contentType: 'image',
+        customPrompt: `Create a new social media post image that's relevant to ${characterData.name}'s expertise and personality. The image should be on-topic and on-brand for a ${postType} style post.`,
+        additionalContext: `Post type: ${postType}`
       });
 
-      const prompt = this.buildPrompt(characterName, characterDescription, systemPrompt, postType);
-
-      const response = await this.client.chat.completions.create({
-        model: 'togethercomputer/llama-2-70b-chat',
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 300,
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 50,
-        repetition_penalty: 1.1,
-        stop: ['</s>', 'Human:', 'Assistant:']
+      // Generate post title
+      const titlePrompt = await this.generatePrompt({
+        characterData,
+        contentType: 'text',
+        customPrompt: `Create a short, engaging title for a ${postType} social media post that reflects ${characterData.name}'s expertise and personality. Keep it under 60 characters.`,
+        additionalContext: `Post type: ${postType}`
       });
 
-      if (!response.choices?.[0]?.message?.content) {
-        throw new Error('No response generated from LLM');
-      }
-
-      const generatedText = response.choices[0].message.content.trim();
-      
-      // Parse the response to extract image prompt, title, and description
-      const parsed = this.parseLLMResponse(generatedText);
+      // Generate post description
+      const descriptionPrompt = await this.generatePrompt({
+        characterData,
+        contentType: 'text',
+        customPrompt: `Create a brief, engaging description for a ${postType} social media post that reflects ${characterData.name}'s expertise and personality. Keep it under 200 characters.`,
+        additionalContext: `Post type: ${postType}`
+      });
 
       return {
-        imagePrompt: parsed.imagePrompt,
-        postTitle: parsed.postTitle,
-        postDescription: parsed.postDescription
+        imagePrompt,
+        postTitle: titlePrompt,
+        postDescription: descriptionPrompt
       };
     } catch (error) {
-      console.error('Prompt Generation Error:', error);
-      throw new Error('Failed to generate image prompt');
+      console.error('Error generating auto post content:', error);
+      throw new Error('Failed to generate auto post content');
     }
   }
 
-  private buildPrompt(
-    characterName: string,
-    characterDescription: string,
-    systemPrompt: string,
-    postType: string
-  ): string {
-    const postTypeContext = {
-      social: 'social media post that would engage followers',
-      professional: 'professional headshot or business setting',
-      casual: 'casual, relaxed, everyday setting',
-      creative: 'creative, artistic, or imaginative scene'
-    };
-
-    return `<s>[INST] You are an expert at creating image prompts for AI image generation. 
-
-Character Information:
-- Name: ${characterName}
-- Description: ${characterDescription}
-- System Prompt: ${systemPrompt}
-
-Task: Create an image prompt for a ${postTypeContext[postType as keyof typeof postTypeContext] || 'social media post'} featuring this character.
-
-Requirements:
-1. The image prompt should be detailed and descriptive
-2. Include visual elements that reflect the character's personality and expertise
-3. Make it suitable for AI image generation (clear, specific, visual)
-4. Keep it under 200 words
-5. Include lighting, setting, and style details
-
-Format your response as:
-IMAGE_PROMPT: [your detailed image prompt here]
-POST_TITLE: [a catchy title for the social media post]
-POST_DESCRIPTION: [a brief description or caption for the post]
-
-Example:
-IMAGE_PROMPT: Professional headshot of a confident business consultant in a modern office, wearing a sharp navy suit, warm lighting, professional background, high quality, detailed facial features, approachable expression
-POST_TITLE: Ready to help you scale your business! 🚀
-POST_DESCRIPTION: Let's discuss your growth strategy and unlock your business potential.
-
-[/INST]</s>`;
+  async generateVideoPrompt(characterData: CharacterData, customPrompt?: string, additionalContext?: string): Promise<string> {
+    return this.generatePrompt({
+      characterData,
+      contentType: 'video',
+      customPrompt,
+      additionalContext
+    });
   }
 
-  private parseLLMResponse(response: string): {
-    imagePrompt: string;
-    postTitle?: string;
-    postDescription?: string;
-  } {
-    const lines = response.split('\n');
-    let imagePrompt = '';
-    let postTitle = '';
-    let postDescription = '';
-
-    for (const line of lines) {
-      if (line.startsWith('IMAGE_PROMPT:')) {
-        imagePrompt = line.replace('IMAGE_PROMPT:', '').trim();
-      } else if (line.startsWith('POST_TITLE:')) {
-        postTitle = line.replace('POST_TITLE:', '').trim();
-      } else if (line.startsWith('POST_DESCRIPTION:')) {
-        postDescription = line.replace('POST_DESCRIPTION:', '').trim();
-      }
-    }
-
-    // Fallback: if parsing fails, use the entire response as image prompt
-    if (!imagePrompt) {
-      imagePrompt = response.trim();
-    }
-
-    return {
-      imagePrompt,
-      postTitle: postTitle || undefined,
-      postDescription: postDescription || undefined
-    };
+  async generateReelPrompt(characterData: CharacterData, customPrompt?: string, additionalContext?: string): Promise<string> {
+    return this.generatePrompt({
+      characterData,
+      contentType: 'reel',
+      customPrompt,
+      additionalContext
+    });
   }
 }
 

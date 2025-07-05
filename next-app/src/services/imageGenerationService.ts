@@ -61,8 +61,11 @@ export class ImageGenerationService {
 
         // Add image_url if provided for FLUX Kontext
         if (conditionImage) {
+          console.log('Processing condition image for FLUX Kontext:', conditionImage);
           // Validate and preprocess condition image
           const validation = this.validateConditionImage(conditionImage);
+          console.log('Condition image validation result:', validation);
+          
           if (!validation.isValid) {
             console.warn('Condition image validation failed:', validation.error);
             // If condition image is invalid, try without it using FLUX.1 Dev
@@ -77,6 +80,7 @@ export class ImageGenerationService {
           } else {
             // For FLUX Kontext, we need to convert base64 to URL or use URL directly
             if (validation.processedImage?.startsWith('http')) {
+              console.log('Using HTTP URL as condition image:', validation.processedImage);
               requestBody.image_url = validation.processedImage;
             } else {
               // Convert base64 to S3 URL for FLUX Kontext
@@ -217,9 +221,9 @@ export class ImageGenerationService {
     existingImageUrl?: string
   ): Promise<string> {
     try {
-      // Create a default prompt if none provided
+      // Create a more relevant, on-brand prompt if none provided
       const defaultPrompt = customPrompt || 
-        `Professional headshot of ${characterName}, ${characterDescription}, high quality, detailed, professional lighting, studio background`;
+        `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
 
       // If no existing image, use Stable Diffusion XL directly
       if (!existingImageUrl) {
@@ -278,9 +282,9 @@ export class ImageGenerationService {
     customPrompt?: string
   ): Promise<string> {
     try {
-      // Create a default prompt if none provided
+      // Create a more relevant, on-brand prompt if none provided
       const defaultPrompt = customPrompt || 
-        `Professional headshot of ${characterName}, ${characterDescription}, high quality, detailed, professional lighting, studio background`;
+        `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
 
       // Use FLUX.1 Dev for initial character images
       const response = await this.generateImages({
@@ -384,7 +388,7 @@ export class ImageGenerationService {
   ): Promise<string[]> {
     try {
       const defaultPrompt = customPrompt || 
-        `Professional headshot of ${characterName}, ${characterDescription}, high quality, detailed, professional lighting, studio background`;
+        `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
 
       const response = await this.generateImages({
         prompt: defaultPrompt,
@@ -427,23 +431,9 @@ export class ImageGenerationService {
     try {
       // Check if it's a valid URL
       if (conditionImage.startsWith('http://') || conditionImage.startsWith('https://')) {
-        // For URLs, validate that they're accessible and return proper image format
-        try {
-          const url = new URL(conditionImage);
-          // Only allow certain image formats for FLUX Kontext
-          const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-          const hasValidExtension = allowedExtensions.some(ext => 
-            url.pathname.toLowerCase().endsWith(ext)
-          );
-          
-          if (!hasValidExtension) {
-            return { isValid: false, error: 'URL must point to a valid image file (jpg, jpeg, png, webp)' };
-          }
-          
-          return { isValid: true, processedImage: conditionImage };
-        } catch (urlError) {
-          return { isValid: false, error: 'Invalid URL format' };
-        }
+        // Trust that our generated URLs are valid
+        console.log('Accepting HTTP/HTTPS URL as condition image:', conditionImage);
+        return { isValid: true, processedImage: conditionImage };
       }
 
       // Check if it's a valid base64 data URL

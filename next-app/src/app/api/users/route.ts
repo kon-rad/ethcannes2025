@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             description: true,
-            imageUrl: true
+            imageUrl: true,
+            systemPrompt: true
           },
           orderBy: {
             createdAt: 'desc'

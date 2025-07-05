@@ -1,34 +1,72 @@
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { SiweMessage } from 'siwe'
+import { MiniAppWalletAuthSuccessPayload, verifySiweMessage } from '@worldcoin/minikit-js'
 import { prisma } from '@/lib/prisma'
 
 interface IRequestPayload {
-  message: string
-  signature: string
+  message?: string
+  signature?: string
   nonce: string
+  payload?: MiniAppWalletAuthSuccessPayload
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, signature, nonce } = (await req.json()) as IRequestPayload
+    const { message, signature, nonce, payload } = (await req.json()) as IRequestPayload
 
-    console.log('Received SIWE request:', { message, signature, nonce })
+    console.log('Received SIWE request:', { message, signature, nonce, payload })
 
-    // Verify the SIWE message
-    const siweMessage = new SiweMessage(JSON.parse(message))
-    
-    // Verify the signature
-    const fields = await siweMessage.verify({ signature })
-    
-    if (!fields.success) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    let address: string
+
+    // Handle World App Mini Kit authentication
+    if (payload) {
+      // Verify the nonce matches
+      const cookieStore = await cookies()
+      const storedNonce = cookieStore.get('siwe')?.value
+      
+      if (nonce !== storedNonce) {
+        return NextResponse.json({
+          status: 'error',
+          isValid: false,
+          message: 'Invalid nonce',
+        }, { status: 400 })
+      }
+
+      try {
+        const validMessage = await verifySiweMessage(payload, nonce)
+        if (!validMessage.isValid) {
+          return NextResponse.json({
+            status: 'error',
+            isValid: false,
+            message: 'Invalid SIWE message',
+          }, { status: 400 })
+        }
+        address = payload.address
+      } catch (error: any) {
+        return NextResponse.json({
+          status: 'error',
+          isValid: false,
+          message: error.message,
+        }, { status: 400 })
+      }
+    } 
+    // Handle regular SIWE authentication
+    else if (message && signature) {
+      // Verify the SIWE message
+      const siweMessage = new SiweMessage(JSON.parse(message))
+      
+      // Verify the signature
+      const fields = await siweMessage.verify({ signature })
+      
+      if (!fields.success) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+      }
+
+      address = fields.data.address
+    } else {
+      return NextResponse.json({ error: 'Invalid request format' }, { status: 400 })
     }
-
-    // Check if nonce matches (you might want to store this in a session/database)
-    // For now, we'll skip nonce verification for simplicity
-
-    const address = fields.data.address
 
     // Find or create user
     let user = await prisma.user.findUnique({
