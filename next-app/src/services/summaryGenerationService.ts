@@ -154,6 +154,92 @@ Make the topics specific, actionable, and interesting to the target audience.
       throw error;
     }
   }
+
+  /**
+   * 根据搜索结果直接生成图像生成提示
+   */
+  async generateImagePrompts({
+    characterId,
+    userId,
+    topicCount = 5,
+    searchResults
+  }: {
+    characterId: string;
+    userId: string;
+    topicCount?: number;
+    searchResults: string;
+  }): Promise<SummaryResponse> {
+    try {
+      console.log('Generating image prompts', { characterId, userId, topicCount });
+
+      // 获取角色信息
+      const character = await prisma.aICharacter.findUnique({
+        where: { id: characterId }
+      });
+
+      if (!character) {
+        throw new Error('Character not found');
+      }
+
+      // 为AI提供的系统提示
+      const systemPrompt = `You are a professional content strategist helping ${character.name} create engaging visual content.
+Based on the search results data provided, generate ${topicCount} specific image generation prompts.
+Each prompt should be detailed and descriptive enough to create compelling visual content.
+Focus on prompts that would be interesting to an audience interested in ${character.description}.
+Make the prompts specific, actionable, and visually appealing.
+
+IMPORTANT: Return ONLY the prompts separated by "|||" delimiter. Do not include any other text, numbering, or formatting.`;
+
+      // 为AI提供的用户消息
+      const userMessage = `
+Here is the search data to analyze:
+
+${searchResults}
+
+Based on this information, generate ${topicCount} image generation prompts for ${character.name}.
+Make the prompts specific, actionable, and interesting to the target audience.
+Each prompt should be detailed enough to generate a compelling image.
+
+Return ONLY the prompts separated by "|||" delimiter. Do not include any other text, numbering, or formatting.
+Example format: "prompt1|||prompt2|||prompt3"
+`;
+
+      // 使用AI生成摘要
+      const summaryResponse = await summarizeWithAI({
+        systemPrompt,
+        userMessage,
+        modelName: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo'
+      });
+
+      // 解析返回的主题
+      const topics = summaryResponse
+        .split('|||')
+        .map(topic => topic.trim())
+        .filter(topic => topic.length > 0);
+
+      // 保存生成的主题到当前状态
+      await prisma.currentState.update({
+        where: {
+          userId_characterId: {
+            userId,
+            characterId
+          }
+        },
+        data: {
+          topicSuggestions: JSON.stringify(topics),
+          updatedAt: new Date()
+        }
+      });
+
+      return {
+        topics,
+        raw: summaryResponse
+      };
+    } catch (error) {
+      console.error('Error generating image prompts:', error);
+      throw error;
+    }
+  }
 }
 
 // 导出单例实例

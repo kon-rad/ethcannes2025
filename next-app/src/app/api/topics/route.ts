@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { summaryGenerationService } from '@/services/summaryGenerationService';
+import { tavilySearchService } from '@/services/tavilySearchService';
 
 export async function POST(request: NextRequest) {
   try {
-    const { characterId, topicCount = 5, format = 'list' } = await request.json();
+    const { characterId, query, topicCount = 5 } = await request.json();
 
-    if (!characterId) {
+    if (!characterId || !query) {
       return NextResponse.json(
-        { error: 'Character ID is required' },
+        { error: 'Character ID and query are required' },
         { status: 400 }
       );
     }
@@ -49,29 +50,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证当前状态中存在搜索结果
-    const currentState = await prisma.currentState.findUnique({
-      where: {
-        userId_characterId: {
-          userId,
-          characterId
-        }
-      }
+    console.log('Starting combined search and topic generation:', {
+      query,
+      userId,
+      characterId
     });
 
-    if (!currentState?.searchResults) {
-      return NextResponse.json(
-        { error: 'No search results found. Please perform a search first.' },
-        { status: 400 }
-      );
-    }
+    // 1. 执行搜索并保存结果
+    const searchResults = await tavilySearchService.searchAndSave(
+      { query },
+      userId,
+      characterId
+    );
 
-    // 生成主题摘要
-    const summary = await summaryGenerationService.generateTopicSummary({
+    // 2. 生成图像生成提示
+    const summary = await summaryGenerationService.generateImagePrompts({
       characterId,
       userId,
       topicCount,
-      format
+      searchResults
     });
 
     return NextResponse.json({

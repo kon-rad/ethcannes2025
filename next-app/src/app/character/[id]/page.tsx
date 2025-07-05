@@ -56,11 +56,8 @@ export default function CharacterManagement() {
   const [wldPriceUSD, setWldPriceUSD] = useState<number | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const [autoPosting, setAutoPosting] = useState(false)
-  const [postType, setPostType] = useState<'social' | 'professional' | 'casual' | 'creative'>('social')
-  const [testingSearch, setTestingSearch] = useState(false)
+  const [postType, setPostType] = useState<'text-long' | 'text-short' | 'image' | 'video'>('image')
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState('')
-  const [showSearchResults, setShowSearchResults] = useState(false)
   const [testingTopics, setTestingTopics] = useState(false)
   const [topicResults, setTopicResults] = useState<string[]>([])
 
@@ -433,39 +430,7 @@ export default function CharacterManagement() {
     }
   }
 
-  const testSearch = async () => {
-    if (!searchQuery.trim() || testingSearch) return
-    
-    setTestingSearch(true)
-    setSearchResults('')
-    setShowSearchResults(true)
-    
-    try {
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          characterId: params.id,
-          query: searchQuery,
-        }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setSearchResults(data.results || 'Search successful, but no results returned')
-      } else {
-        const errorText = await response.text()
-        throw new Error(errorText || response.statusText)
-      }
-    } catch (error) {
-      console.error('search functionality failed:', error)
-      setSearchResults(`Search error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setTestingSearch(false)
-    }
-  }
+
 
   const testTopics = async () => {
     if (testingTopics) return
@@ -481,8 +446,8 @@ export default function CharacterManagement() {
         },
         body: JSON.stringify({
           characterId: params.id,
+          query: searchQuery.trim() || `Generate image prompts for ${character?.name} based on their expertise: ${character?.description}`,
           topicCount: 5,
-          format: 'list',
         }),
       })
       
@@ -519,8 +484,8 @@ export default function CharacterManagement() {
 
   return (
     <div className="min-h-screen bg-[#FFFFFF]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="bg-[#F8F9FA] backdrop-blur-lg rounded-2xl p-4 sm:p-6 lg:p-8 border border-[#9CA3AF]/20">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 py-2 sm:py-4">
+        <div className="bg-[#F8F9FA] backdrop-blur-lg rounded-2xl p-3 sm:p-4 lg:p-6 border border-[#9CA3AF]/20">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
             <div>
@@ -602,19 +567,30 @@ export default function CharacterManagement() {
                 </div>
               </div>
             ) : (
-              <>
+              <div className="flex flex-col items-center sm:items-start space-y-4">
                 {character.imageUrl ? (
                   <img
                     src={character.imageUrl}
                     alt={character.name}
-                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg object-cover mx-auto sm:mx-0"
+                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-700 rounded-lg flex items-center justify-center mx-auto sm:mx-0">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-700 rounded-lg flex items-center justify-center">
                     <span className="text-gray-400 text-xs sm:text-sm">No Image</span>
                   </div>
                 )}
-              </>
+                
+                {/* Chat Button - Below Image */}
+                <button
+                  onClick={() => router.push(`/character/${params.id}/chat`)}
+                  className="btn-cyberpunk-accent flex items-center justify-center space-x-2"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span>Chat with {character.name}</span>
+                </button>
+              </div>
             )}
           </div>
 
@@ -623,64 +599,61 @@ export default function CharacterManagement() {
             <div className="mb-6 sm:mb-8">
               
               <div className="space-y-4">
-                {/* Tavily Search for Image Inspiration */}
+                {/* Topics Brainstorm for Image Inspiration */}
                 <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
                   <h4 className="text-[#1F2937] font-medium mb-2 flex items-center">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    Search for Image Inspiration (Optional)
+                    Topics Brainstorm (Optional)
                   </h4>
                   <p className="text-[#6B7280] text-xs mb-3">
-                    Search for relevant topics on the web to get inspiration for your image prompt
+                    Describe topics related to your character's expertise to generate image prompts
                   </p>
-                  <div className="flex space-x-2 mb-3">
-                    <input
-                      type="text"
+                  <div className="space-y-3 mb-3">
+                    <textarea
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="flex-1 bg-white border border-[#9CA3AF]/30 rounded-lg px-3 py-2 text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                      placeholder="Search for topics related to your character's expertise..."
+                      className="w-full bg-white border border-[#9CA3AF]/30 rounded-lg px-3 py-3 text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                      placeholder="Describe topics related to your character's expertise, current trends, or areas of interest..."
+                      rows={4}
                     />
                     <button
-                      onClick={testSearch}
-                      disabled={!searchQuery.trim() || testingSearch}
+                      onClick={testTopics}
+                      disabled={testingTopics}
                       className={`${
-                        !searchQuery.trim() || testingSearch
+                        testingTopics
                           ? 'bg-purple-400 cursor-not-allowed'
                           : 'bg-purple-600 hover:bg-purple-700'
-                      } text-white px-4 py-2 rounded-lg transition-colors text-sm`}
+                      } text-white px-4 py-2 rounded-lg transition-colors text-sm w-full`}
                     >
-                      {testingSearch ? (
-                        <div className="flex items-center">
+                      {testingTopics ? (
+                        <div className="flex items-center justify-center">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          <span>Searching...</span>
+                          <span>Generating Image Prompts...</span>
                         </div>
                       ) : (
-                        'Search'
+                        'Generate Prompts'
                       )}
                     </button>
                   </div>
-                  {showSearchResults && (
+                  {topicResults.length > 0 && (
                     <div className="bg-white rounded-lg p-3 border border-[#9CA3AF]/30">
-                      {searchResults ? (
-                        <div>
-                          <p className="text-sm text-[#1F2937] whitespace-pre-wrap max-h-40 overflow-y-auto mb-2">
-                            {searchResults}
-                          </p>
-                          <p className="text-xs text-[#6B7280] italic">
-                            💡 Use these search results to inspire your image prompt below
-                          </p>
-                        </div>
-                      ) : (
-                        testingSearch ? (
-                          <div className="flex justify-center items-center py-4">
-                            <div className="w-6 h-6 border-2 border-purple-300 border-t-transparent rounded-full animate-spin"></div>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-[#6B7280]">Search results will appear here</p>
-                        )
-                      )}
+                      <h5 className="text-sm font-medium text-[#1F2937] mb-2">Image Generation Prompts:</h5>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {topicResults.map((topic, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setImagePrompt(topic)}
+                            className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs hover:bg-purple-200 transition-colors cursor-pointer border border-purple-200"
+                          >
+                            {topic.length > 50 ? `${topic.substring(0, 50)}...` : topic}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-[#6B7280] italic">
+                        💡 Click any prompt above to use it in the image generation below
+                      </p>
                     </div>
                   )}
                 </div>
@@ -701,6 +674,59 @@ export default function CharacterManagement() {
                     Leave empty to use auto-generated on-brand prompt based on character's expertise
                   </p>
                 </div>
+
+                {/* Post Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-[#1F2937] mb-3">
+                    Post Type
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPostType('text-long')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform ${
+                        postType === 'text-long'
+                          ? 'bg-purple-600 text-white shadow-inner scale-95'
+                          : 'bg-white text-[#1F2937] border border-[#9CA3AF]/30 hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                    >
+                      Text (Long)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPostType('text-short')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform ${
+                        postType === 'text-short'
+                          ? 'bg-purple-600 text-white shadow-inner scale-95'
+                          : 'bg-white text-[#1F2937] border border-[#9CA3AF]/30 hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                    >
+                      Text (Short)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPostType('image')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform ${
+                        postType === 'image'
+                          ? 'bg-purple-600 text-white shadow-inner scale-95'
+                          : 'bg-white text-[#1F2937] border border-[#9CA3AF]/30 hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                    >
+                      Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPostType('video')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform ${
+                        postType === 'video'
+                          ? 'bg-purple-600 text-white shadow-inner scale-95'
+                          : 'bg-white text-[#1F2937] border border-[#9CA3AF]/30 hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                    >
+                      Video
+                    </button>
+                  </div>
+                </div>
                 <button
                   onClick={generateNewImage}
                   disabled={generatingImage}
@@ -716,47 +742,22 @@ export default function CharacterManagement() {
                       <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
                       </svg>
-                      <span>{character.imageUrl ? 'Generate New Post Image' : 'Generate Initial Post Image'}</span>
+                      <span>{'Generate New Post'}</span>
                     </>
                   )}
                 </button>
-                
-                {/* Chat Button */}
-                <div className="mt-4">
-                  <button
-                    onClick={() => router.push(`/character/${params.id}/chat`)}
-                    className="w-full sm:w-auto btn-cyberpunk-accent flex items-center justify-center space-x-2"
-                  >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    <span>Chat with {character.name}</span>
-                  </button>
-                </div>
 
 
               </div>
             </div>
           )}
 
-        {/* Non-Owner View - Show character info and chat option */}
+        {/* Non-Owner View - Show character info */}
         {!isOwner && !isEditingCharacter && (
           <div className="mb-6 sm:mb-8">
             <div className="p-4 bg-[#F3F4F6] rounded-lg">
               <h3 className="text-lg font-semibold text-[#1F2937] mb-4">About {character.name}</h3>
               <p className="text-[#374151] text-sm mb-4">{character.description}</p>
-              
-              <div className="mt-4">
-                <button
-                  onClick={() => router.push(`/character/${params.id}/chat`)}
-                  className="w-full btn-cyberpunk-accent flex items-center justify-center space-x-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <span>Chat with {character.name}</span>
-                </button>
-              </div>
             </div>
           </div>
         )}
@@ -801,119 +802,8 @@ export default function CharacterManagement() {
           </div>
         )}
 
-          {/* Test AI Services Section - Owner Only */}
-          {isOwner && !isEditingCharacter && (
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-[#1F2937] mb-4">
-                Test AI Services
-              </h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-100 rounded-lg">
-                  <p className="text-blue-800 text-sm">
-                    🧪 <strong>AI Testing Tools:</strong> Test various AI services including web search and topic generation. These tools help your character gather real-time information.
-                  </p>
-                </div>
-                
-                {/* Topic Generation Section */}
-                <div className="p-4 bg-green-100 rounded-lg">
-                  <h4 className="text-[#1F2937] font-medium mb-2">Test Topic Summary Generation</h4>
-                  <div className="flex mb-2">
-                    <button
-                      onClick={testTopics}
-                      disabled={testingTopics}
-                      className={`${
-                        testingTopics
-                          ? 'bg-green-400 cursor-not-allowed'
-                          : 'bg-green-600 hover:bg-green-700'
-                      } text-white px-4 py-2 rounded-lg transition-colors w-full flex items-center justify-center space-x-2`}
-                    >
-                      {testingTopics ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Generating...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                          <span>Generate Topic Summary</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  {topicResults.length > 0 && (
-                    <div className="bg-white rounded-lg p-3 mt-2 border border-[#9CA3AF]/30">
-                      <ul className="list-disc list-inside text-[#1F2937]">
-                        {topicResults.map((topic, index) => (
-                          <li key={index} className="text-sm mb-1">{topic}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  <p className="text-xs text-[#6B7280] italic mt-2">
-                    Note: You must first use the search function to get content before generating topic summaries
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* Auto Post Section - Owner Only */}
-          {isOwner && !isEditingCharacter && (
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-[#1F2937] mb-4">
-                Auto Post Generation
-              </h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-green-100 rounded-lg">
-                  <p className="text-green-800 text-sm">
-                    🤖 <strong>AI-Powered Auto Post:</strong> This will analyze your character's information and automatically generate a social media post with an appropriate image, title, and description.
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[#1F2937] mb-2">
-                    Post Type
-                  </label>
-                  <select
-                    value={postType}
-                    onChange={(e) => setPostType(e.target.value as any)}
-                    className="w-full px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    disabled={autoPosting}
-                  >
-                    <option value="social">Social Media Post</option>
-                    <option value="professional">Professional/Business</option>
-                    <option value="casual">Casual/Relaxed</option>
-                    <option value="creative">Creative/Artistic</option>
-                  </select>
-                  <p className="text-[#6B7280] text-xs mt-1">
-                    Choose the style and tone for your auto-generated post
-                  </p>
-                </div>
 
-                <button
-                  onClick={autoPost}
-                  disabled={autoPosting}
-                  className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors flex items-center space-x-2"
-                >
-                  {autoPosting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Creating Auto Post...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      <span>Auto Post</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Character Details Edit Form */}
           {isEditingCharacter && (
@@ -1015,7 +905,7 @@ export default function CharacterManagement() {
               <h3 className="text-lg sm:text-xl font-semibold text-[#1F2937] mb-4 sm:mb-6">
                 {character.name}'s Posts
               </h3>
-              <div className="bg-[#F3F4F6] rounded-lg p-3 sm:p-6">
+              <div className="bg-[#F3F4F6] rounded-lg p-1 sm:p-6">
                 <PostFeed characterId={character.id} />
               </div>
             </div>

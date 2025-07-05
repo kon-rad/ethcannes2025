@@ -75,9 +75,7 @@ export default function PostFeed({ characterId }: PostFeedProps) {
     }
   };
 
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
+
 
   const handleCharacterClick = (characterId: string) => {
     router.push(`/character/${characterId}`);
@@ -180,15 +178,11 @@ export default function PostFeed({ characterId }: PostFeedProps) {
                 </>
               )}
             </div>
-            
-            <div className="text-[#6B7280] text-xs">
-              {formatAddress(post.user.walletAddress)}
-            </div>
           </div>
 
           {/* Post Image - Larger and more prominent */}
           {post.imageUrl && (
-            <div className="relative w-full h-64">
+            <div className="relative w-full h-64 mb-2">
               <Image
                 src={post.imageUrl}
                 alt={post.title || 'Post image'}
@@ -198,12 +192,7 @@ export default function PostFeed({ characterId }: PostFeedProps) {
             </div>
           )}
 
-          {/* Post Title */}
-          {post.title && (
-            <div className="p-4 pt-3">
-              <h4 className="text-sm font-semibold text-[#1F2937] line-clamp-2">{post.title}</h4>
-            </div>
-          )}
+
 
           {/* Engagement Stats */}
           <div className="px-4 pb-4">
