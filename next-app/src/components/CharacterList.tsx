@@ -95,8 +95,8 @@ export default function CharacterList() {
                   <span>Profile</span>
                 </button>
                 <button 
-                  onClick={() => window.location.href = `/character/${character.id}`}
-                  className=""
+                  onClick={() => window.location.href = `/character/${character.id}/edit`}
+                  className="btn-secondary btn-sm"
                 >
                   Manage
                 </button>

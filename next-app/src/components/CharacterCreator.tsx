@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { uploadToS3 } from '@/lib/s3'
 import { getWLDPriceInUSD } from '@/lib/worldcoin-pricing'
 import { MiniKit } from '@worldcoin/minikit-js'
 
@@ -78,11 +77,24 @@ export default function CharacterCreator({ onClose, onCharacterCreated, user }: 
     setIsLoading(true)
 
     try {
-      // First upload image to S3
+      // First upload image to S3 if provided
       let imageUrl = ''
       if (formData.image) {
-        const uploadResult = await uploadToS3(formData.image)
-        imageUrl = uploadResult.url
+        const formDataToSend = new FormData()
+        formDataToSend.append('image', formData.image)
+        formDataToSend.append('characterId', 'temp-' + Date.now()) // Temporary ID for new characters
+
+        const uploadResponse = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formDataToSend,
+        })
+
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json()
+          imageUrl = uploadResult.imageUrl
+        } else {
+          throw new Error('Failed to upload image')
+        }
       }
 
       // Create character in database
