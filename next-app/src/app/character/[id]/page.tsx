@@ -55,8 +55,14 @@ export default function CharacterManagement() {
   const [processingPayment, setProcessingPayment] = useState(false)
   const [wldPriceUSD, setWldPriceUSD] = useState<number | null>(null)
   const [isOwner, setIsOwner] = useState(false)
-
-
+  const [autoPosting, setAutoPosting] = useState(false)
+  const [postType, setPostType] = useState<'social' | 'professional' | 'casual' | 'creative'>('social')
+  const [testingSearch, setTestingSearch] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState('')
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [testingTopics, setTestingTopics] = useState(false)
+  const [topicResults, setTopicResults] = useState<string[]>([])
 
   useEffect(() => {
     checkAuthStatus()
@@ -267,7 +273,45 @@ export default function CharacterManagement() {
     }
   }
 
+  const autoPost = async () => {
+    if (!character || autoPosting) return
 
+    setAutoPosting(true)
+    try {
+      const response = await fetch('/api/auto-post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: character.id,
+          postType: postType,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert('Auto post created successfully!')
+      } else {
+        // Check if content type is JSON
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to create auto post')
+        } else {
+          // Non-JSON response, get status code and text
+          const statusText = response.statusText
+          const status = response.status
+          throw new Error(`Server error (${status}): ${statusText || 'Unknown error'}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error creating auto post:', error)
+      alert(`Failed to create auto post: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setAutoPosting(false)
+    }
+  }
 
   const startEditing = () => {
     if (!character) return
@@ -386,6 +430,74 @@ export default function CharacterManagement() {
     } catch (error) {
       console.error('Error updating character:', error)
       alert(`Failed to update character: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const testSearch = async () => {
+    if (!searchQuery.trim() || testingSearch) return
+    
+    setTestingSearch(true)
+    setSearchResults('')
+    setShowSearchResults(true)
+    
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: params.id,
+          query: searchQuery,
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSearchResults(data.results || 'Search successful, but no results returned')
+      } else {
+        const errorText = await response.text()
+        throw new Error(errorText || response.statusText)
+      }
+    } catch (error) {
+      console.error('search functionality failed:', error)
+      setSearchResults(`Search error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setTestingSearch(false)
+    }
+  }
+
+  const testTopics = async () => {
+    if (testingTopics) return
+    
+    setTestingTopics(true)
+    setTopicResults([])
+    
+    try {
+      const response = await fetch('/api/topics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          characterId: params.id,
+          topicCount: 5,
+          format: 'list',
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTopicResults(data.topics || [])
+      } else {
+        const errorText = await response.text()
+        throw new Error(errorText || response.statusText)
+      }
+    } catch (error) {
+      console.error('topic generation failed:', error)
+      setTopicResults([`Generation error: ${error instanceof Error ? error.message : 'Unknown error'}`])
+    } finally {
+      setTestingTopics(false)
     }
   }
 
@@ -511,6 +623,68 @@ export default function CharacterManagement() {
             <div className="mb-6 sm:mb-8">
               
               <div className="space-y-4">
+                {/* Tavily Search for Image Inspiration */}
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <h4 className="text-[#1F2937] font-medium mb-2 flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search for Image Inspiration (Optional)
+                  </h4>
+                  <p className="text-[#6B7280] text-xs mb-3">
+                    Search for relevant topics on the web to get inspiration for your image prompt
+                  </p>
+                  <div className="flex space-x-2 mb-3">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 bg-white border border-[#9CA3AF]/30 rounded-lg px-3 py-2 text-[#1F2937] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                      placeholder="Search for topics related to your character's expertise..."
+                    />
+                    <button
+                      onClick={testSearch}
+                      disabled={!searchQuery.trim() || testingSearch}
+                      className={`${
+                        !searchQuery.trim() || testingSearch
+                          ? 'bg-purple-400 cursor-not-allowed'
+                          : 'bg-purple-600 hover:bg-purple-700'
+                      } text-white px-4 py-2 rounded-lg transition-colors text-sm`}
+                    >
+                      {testingSearch ? (
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          <span>Searching...</span>
+                        </div>
+                      ) : (
+                        'Search'
+                      )}
+                    </button>
+                  </div>
+                  {showSearchResults && (
+                    <div className="bg-white rounded-lg p-3 border border-[#9CA3AF]/30">
+                      {searchResults ? (
+                        <div>
+                          <p className="text-sm text-[#1F2937] whitespace-pre-wrap max-h-40 overflow-y-auto mb-2">
+                            {searchResults}
+                          </p>
+                          <p className="text-xs text-[#6B7280] italic">
+                            💡 Use these search results to inspire your image prompt below
+                          </p>
+                        </div>
+                      ) : (
+                        testingSearch ? (
+                          <div className="flex justify-center items-center py-4">
+                            <div className="w-6 h-6 border-2 border-purple-300 border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-[#6B7280]">Search results will appear here</p>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-[#1F2937] mb-2">
                     Image Prompt (Optional)
@@ -540,7 +714,7 @@ export default function CharacterManagement() {
                   ) : (
                     <>
                       <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
                       </svg>
                       <span>{character.imageUrl ? 'Generate New Post Image' : 'Generate Initial Post Image'}</span>
                     </>
@@ -626,6 +800,120 @@ export default function CharacterManagement() {
             </div>
           </div>
         )}
+
+          {/* Test AI Services Section - Owner Only */}
+          {isOwner && !isEditingCharacter && (
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-[#1F2937] mb-4">
+                Test AI Services
+              </h3>
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-100 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    🧪 <strong>AI Testing Tools:</strong> Test various AI services including web search and topic generation. These tools help your character gather real-time information.
+                  </p>
+                </div>
+                
+                {/* Topic Generation Section */}
+                <div className="p-4 bg-green-100 rounded-lg">
+                  <h4 className="text-[#1F2937] font-medium mb-2">Test Topic Summary Generation</h4>
+                  <div className="flex mb-2">
+                    <button
+                      onClick={testTopics}
+                      disabled={testingTopics}
+                      className={`${
+                        testingTopics
+                          ? 'bg-green-400 cursor-not-allowed'
+                          : 'bg-green-600 hover:bg-green-700'
+                      } text-white px-4 py-2 rounded-lg transition-colors w-full flex items-center justify-center space-x-2`}
+                    >
+                      {testingTopics ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          <span>Generate Topic Summary</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {topicResults.length > 0 && (
+                    <div className="bg-white rounded-lg p-3 mt-2 border border-[#9CA3AF]/30">
+                      <ul className="list-disc list-inside text-[#1F2937]">
+                        {topicResults.map((topic, index) => (
+                          <li key={index} className="text-sm mb-1">{topic}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-xs text-[#6B7280] italic mt-2">
+                    Note: You must first use the search function to get content before generating topic summaries
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Auto Post Section - Owner Only */}
+          {isOwner && !isEditingCharacter && (
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-[#1F2937] mb-4">
+                Auto Post Generation
+              </h3>
+              <div className="space-y-4">
+                <div className="p-4 bg-green-100 rounded-lg">
+                  <p className="text-green-800 text-sm">
+                    🤖 <strong>AI-Powered Auto Post:</strong> This will analyze your character's information and automatically generate a social media post with an appropriate image, title, and description.
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#1F2937] mb-2">
+                    Post Type
+                  </label>
+                  <select
+                    value={postType}
+                    onChange={(e) => setPostType(e.target.value as any)}
+                    className="w-full px-4 py-3 bg-white border border-[#9CA3AF]/30 rounded-lg text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    disabled={autoPosting}
+                  >
+                    <option value="social">Social Media Post</option>
+                    <option value="professional">Professional/Business</option>
+                    <option value="casual">Casual/Relaxed</option>
+                    <option value="creative">Creative/Artistic</option>
+                  </select>
+                  <p className="text-[#6B7280] text-xs mt-1">
+                    Choose the style and tone for your auto-generated post
+                  </p>
+                </div>
+
+                <button
+                  onClick={autoPost}
+                  disabled={autoPosting}
+                  className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  {autoPosting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Creating Auto Post...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span>Auto Post</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Character Details Edit Form */}
           {isEditingCharacter && (

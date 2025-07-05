@@ -8,7 +8,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
 
 model User {
@@ -19,6 +19,7 @@ model User {
   characters    AICharacter[]
   chatMessages  ChatMessage[]
   posts         Post[]
+  currentStates CurrentState[]
   
   @@map("users")
 }
@@ -41,6 +42,7 @@ model AICharacter {
   user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   chatMessages           ChatMessage[]
   posts                  Post[]
+  currentStates          CurrentState[]
   
   @@map("ai_characters")
 }
@@ -76,4 +78,17 @@ model Post {
   @@map("posts")
 }
 
- 
+model CurrentState {
+  id                String     @id @default(cuid())
+  userId            String
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characterId       String
+  character         AICharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  searchResults     String?    // 存储格式化的搜索结果
+  topicSuggestions  String?    // 存储生成的主题建议（JSON格式）
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@unique([userId, characterId])
+  @@map("current_states")
+} 
