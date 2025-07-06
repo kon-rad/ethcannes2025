@@ -221,10 +221,11 @@ export default function PostFeed({ characterId, userId, refreshKey }: PostFeedPr
               {/* Post Type Badge */}
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                 post.type === 'image' ? 'bg-blue-100 text-blue-800' :
+                post.type === 'image-flux' ? 'bg-green-100 text-green-800' :
                 post.type === 'video' ? 'bg-purple-100 text-purple-800' :
                 'bg-gray-100 text-gray-800'
               }`}>
-                {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+                {post.type === 'image-flux' ? 'Image (Flux)' : post.type.charAt(0).toUpperCase() + post.type.slice(1)}
               </span>
             </div>
           </div>

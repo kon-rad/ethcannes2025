@@ -13,7 +13,7 @@ export interface ImageGenerationResponse {
   images: string[]; // Base64 encoded images
   model: string;
   prompt: string;
-  steps: number;
+  steps?: number; // Optional for FLUX.1 Dev
   n: number;
 }
 
@@ -22,11 +22,25 @@ export class ImageGenerationService {
   private s3Service: S3Service;
 
   constructor() {
+    console.log('=== ImageGenerationService Constructor ===');
+    console.log('TOGETHER_API_KEY exists:', !!process.env.TOGETHER_API_KEY);
+    console.log('TOGETHER_API_KEY length:', process.env.TOGETHER_API_KEY?.length);
+    console.log('TOGETHER_API_KEY prefix:', process.env.TOGETHER_API_KEY?.substring(0, 10) + '...');
+    
     if (!process.env.TOGETHER_API_KEY) {
       throw new Error('TOGETHER_API_KEY is not set in environment variables');
     }
+    
+    console.log('Creating Together AI client...');
     this.client = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+    console.log('Together AI client created successfully');
+    console.log('Client type:', typeof this.client);
+    console.log('Client has images property:', !!this.client.images);
+    console.log('Client images type:', typeof this.client.images);
+    console.log('Client images has create method:', !!this.client.images?.create);
+    
     this.s3Service = new S3Service();
+    console.log('S3Service created successfully');
   }
 
   async generateImages({
@@ -103,7 +117,85 @@ export class ImageGenerationService {
         }
 
         // Use the same create method but with different parameters for FLUX Kontext
-        response = await this.client.images.create(requestBody);
+        console.log('Making FLUX Kontext API call to Together AI...');
+        
+        // Add timeout to prevent hanging requests
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 30000); // 30 second timeout
+        });
+        
+        const apiPromise = this.client.images.create(requestBody);
+        response = await Promise.race([apiPromise, timeoutPromise]) as any;
+      } else if (selectedModel.includes('FLUX.1-dev')) {
+        // Handle FLUX.1 Dev model specifically with retry logic
+        const requestBody: any = {
+          model: selectedModel,
+          prompt,
+          n
+        };
+
+        console.log('=== FLUX.1 Dev Image Generation Debug ===');
+        console.log('Request body:', JSON.stringify(requestBody, null, 2));
+        console.log('Together AI client:', typeof this.client);
+        console.log('Client methods:', Object.keys(this.client));
+        
+        // Retry logic for FLUX.1 Dev
+        const maxRetries = 3;
+        let lastError: any = null;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            console.log(`Making API call to Together AI (attempt ${attempt}/${maxRetries})...`);
+            
+            // Add timeout to prevent hanging requests
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Request timeout')), 30000); // 30 second timeout
+            });
+            
+            const apiPromise = this.client.images.create(requestBody);
+            response = await Promise.race([apiPromise, timeoutPromise]) as any;
+            console.log('API call successful!');
+            console.log('Response type:', typeof response);
+            console.log('Response keys:', Object.keys(response || {}));
+            console.log('Response data:', response?.data ? 'Present' : 'Missing');
+            console.log('Response data length:', response?.data?.length);
+            
+            // If we get here, the call was successful
+            break;
+          } catch (apiError) {
+            lastError = apiError;
+            console.error(`=== FLUX.1 Dev API Error (Attempt ${attempt}/${maxRetries}) ===`);
+            console.error('Error type:', typeof apiError);
+            console.error('Error message:', apiError instanceof Error ? apiError.message : 'Unknown error');
+            console.error('Error stack:', apiError instanceof Error ? apiError.stack : 'No stack');
+            
+            // Check if it's a rate limit or temporary error
+            const errorMessage = apiError instanceof Error ? apiError.message : 'Unknown error';
+            const isRetryable = errorMessage.includes('rate_limit') || 
+                               errorMessage.includes('429') || 
+                               errorMessage.includes('500') || 
+                               errorMessage.includes('502') || 
+                               errorMessage.includes('503') || 
+                               errorMessage.includes('504') ||
+                               errorMessage.includes('timeout') ||
+                               errorMessage.includes('network');
+            
+            if (isRetryable && attempt < maxRetries) {
+              const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
+              console.log(`Retryable error detected. Waiting ${delay}ms before retry...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            } else {
+              console.error('Non-retryable error or max retries reached. Throwing error.');
+              throw apiError;
+            }
+          }
+        }
+        
+        // If we get here without a successful response, throw the last error
+        if (!response) {
+          throw lastError || new Error('Failed to generate image after all retries');
+        }
       } else {
         // Handle other models (like Stable Diffusion XL) with the original API
         const requestBody: any = {
@@ -152,7 +244,7 @@ export class ImageGenerationService {
         images,
         model: selectedModel,
         prompt,
-        steps,
+        steps: selectedModel.includes('FLUX.1-dev') ? undefined : steps,
         n
       };
     } catch (error: unknown) {
@@ -168,12 +260,20 @@ export class ImageGenerationService {
         
         try {
           // Try without condition image since FLUX.1 Dev doesn't support it
-          const fallbackResponse = await this.client.images.create({
+          console.log('Making fallback FLUX.1 Dev API call...');
+          
+          // Add timeout to prevent hanging requests
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), 30000); // 30 second timeout
+          });
+          
+          const apiPromise = this.client.images.create({
             model: 'black-forest-labs/FLUX.1-dev',
             prompt,
-            steps,
             n
           });
+          
+          const fallbackResponse = await Promise.race([apiPromise, timeoutPromise]) as any;
 
           if (fallbackResponse.data && fallbackResponse.data.length > 0) {
             const images = fallbackResponse.data.map((image: any) => {
@@ -181,14 +281,13 @@ export class ImageGenerationService {
                 return `data:image/png;base64,${image.b64_json}`;
               }
               return null;
-            }).filter((img): img is string => img !== null);
+            }).filter((img: string | null): img is string => img !== null);
 
             console.log('Fallback to FLUX.1 Dev successful');
             return {
               images,
               model: 'black-forest-labs/FLUX.1-dev',
               prompt,
-              steps,
               n
             };
           }
@@ -199,18 +298,30 @@ export class ImageGenerationService {
 
       // Check for specific error types and provide better error messages
       if (error instanceof Error) {
+        console.error('=== Final Error Analysis ===');
+        console.error('Error message:', error.message);
+        console.error('Error name:', error.name);
+        
         if (error.message.includes('500')) {
           throw new Error('Image generation service temporarily unavailable. Please try again.');
-        } else if (error.message.includes('rate_limit')) {
+        } else if (error.message.includes('rate_limit') || error.message.includes('429')) {
           throw new Error('Rate limit exceeded. Please wait a moment and try again.');
         } else if (error.message.includes('invalid_api_key')) {
           throw new Error('Invalid API key. Please check your configuration.');
         } else if (error.message.includes('insufficient_quota')) {
           throw new Error('Insufficient quota. Please check your Together AI account.');
+        } else if (error.message.includes('400')) {
+          throw new Error('Invalid request format. Please check your prompt and try again.');
+        } else if (error.message.includes('timeout')) {
+          throw new Error('Request timed out. Please try again.');
+        } else if (error.message.includes('network')) {
+          throw new Error('Network error. Please check your connection and try again.');
         }
       }
 
-      throw new Error('Failed to generate images');
+      // If we get here, provide a generic error with the original message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to generate images: ${errorMessage}`);
     }
   }
 
@@ -255,13 +366,12 @@ export class ImageGenerationService {
         // Fallback to FLUX.1 Dev without condition image
         try {
           console.log('Attempting fallback with FLUX.1 Dev...');
-          const fallbackResponse = await this.generateImages({
-            prompt: defaultPrompt,
-            steps: 28,
-            n: 1,
-            model: 'black-forest-labs/FLUX.1-dev'
-            // Note: No conditionImage for FLUX.1 Dev
-          });
+                  const fallbackResponse = await this.generateImages({
+          prompt: defaultPrompt,
+          n: 1,
+          model: 'black-forest-labs/FLUX.1-dev'
+          // Note: No conditionImage for FLUX.1 Dev
+        });
 
           if (fallbackResponse.images.length > 0) {
             console.log('FLUX.1 Dev fallback successful');
@@ -293,7 +403,6 @@ export class ImageGenerationService {
       // Use FLUX.1 Dev for initial character images
       const response = await this.generateImages({
         prompt: defaultPrompt,
-        steps: 28,
         n: 1,
         model: 'black-forest-labs/FLUX.1-dev'
       });
@@ -396,7 +505,6 @@ export class ImageGenerationService {
 
       const response = await this.generateImages({
         prompt: defaultPrompt,
-        steps: 28,
         n: count
       });
 
@@ -539,6 +647,12 @@ export class ImageGenerationService {
               console.log(`Skipping condition image for ${model} due to invalid format`);
             }
           }
+        } else if (model.includes('FLUX.1-dev')) {
+          requestBody = {
+            model,
+            prompt,
+            n: 1
+          };
         } else {
           requestBody = {
             model,

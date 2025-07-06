@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
     const { 
       prompt, 
       postPrompt, // New parameter for post-specific prompt
+      postType = 'image', // New parameter for post type
       characterId,
       characterName, 
       characterDescription, 
@@ -91,33 +92,105 @@ export async function POST(request: NextRequest) {
     if (finalPrompt) {
       // Generate image with the AI-generated or provided prompt
       console.log('Using final prompt:', finalPrompt);
-      console.log('Condition image for final prompt:', existingImageUrl);
-      const response = await imageGenerationService.generateImages({
-        prompt: finalPrompt,
-        steps,
-        n: 1,
-        conditionImage: existingImageUrl
-      });
-      imageUrl = response.images[0];
-      usedModel = response.model;
+      console.log('Post type:', postType);
+      
+      // Handle different post types
+      if (postType === 'image-flux') {
+        // Use FLUX.1 Dev without condition image for image-flux type
+        console.log('=== API Route: FLUX.1 Dev Generation ===');
+        console.log('Post type:', postType);
+        console.log('Final prompt:', finalPrompt);
+        console.log('Prompt length:', finalPrompt?.length);
+        
+        try {
+          console.log('Calling imageGenerationService.generateImages...');
+          const response = await imageGenerationService.generateImages({
+            prompt: finalPrompt,
+            n: 1,
+            model: 'black-forest-labs/FLUX.1-dev'
+            // No conditionImage for FLUX.1 Dev
+          });
+          console.log('Image generation service response received');
+          console.log('Response model:', response.model);
+          console.log('Response images count:', response.images?.length);
+          console.log('First image type:', typeof response.images[0]);
+          console.log('First image length:', response.images[0]?.length);
+          
+          imageUrl = response.images[0];
+          usedModel = response.model;
+          console.log('Image URL extracted successfully');
+        } catch (serviceError) {
+          console.error('=== API Route: Image Generation Service Error ===');
+          console.error('Error type:', typeof serviceError);
+          console.error('Error message:', serviceError instanceof Error ? serviceError.message : 'Unknown error');
+          console.error('Error stack:', serviceError instanceof Error ? serviceError.stack : 'No stack');
+          throw serviceError;
+        }
+      } else {
+        // Use default logic with condition image for other types
+        console.log('Using condition image for standard image type:', existingImageUrl);
+        const response = await imageGenerationService.generateImages({
+          prompt: finalPrompt,
+          steps,
+          n: 1,
+          conditionImage: existingImageUrl
+        });
+        imageUrl = response.images[0];
+        usedModel = response.model;
+      }
     } else if (prompt) {
       // Fallback to original prompt logic
       console.log('Using original prompt:', prompt);
-      console.log('Condition image for original prompt:', existingImageUrl);
-      const response = await imageGenerationService.generateImages({
-        prompt: prompt,
-        steps,
-        n: 1,
-        conditionImage: existingImageUrl
-      });
-      imageUrl = response.images[0];
-      usedModel = response.model;
+      console.log('Post type:', postType);
+      
+      // Handle different post types
+      if (postType === 'image-flux') {
+        // Use FLUX.1 Dev without condition image for image-flux type
+        console.log('=== API Route: FLUX.1 Dev Generation (Fallback) ===');
+        console.log('Post type:', postType);
+        console.log('Original prompt:', prompt);
+        console.log('Prompt length:', prompt?.length);
+        
+        try {
+          console.log('Calling imageGenerationService.generateImages (fallback)...');
+          const response = await imageGenerationService.generateImages({
+            prompt: prompt,
+            n: 1,
+            model: 'black-forest-labs/FLUX.1-dev'
+            // No conditionImage for FLUX.1 Dev
+          });
+          console.log('Image generation service response received (fallback)');
+          console.log('Response model:', response.model);
+          console.log('Response images count:', response.images?.length);
+          
+          imageUrl = response.images[0];
+          usedModel = response.model;
+          console.log('Image URL extracted successfully (fallback)');
+        } catch (serviceError) {
+          console.error('=== API Route: Image Generation Service Error (Fallback) ===');
+          console.error('Error type:', typeof serviceError);
+          console.error('Error message:', serviceError instanceof Error ? serviceError.message : 'Unknown error');
+          console.error('Error stack:', serviceError instanceof Error ? serviceError.stack : 'No stack');
+          throw serviceError;
+        }
+      } else {
+        // Use default logic with condition image for other types
+        console.log('Using condition image for standard image type:', existingImageUrl);
+        const response = await imageGenerationService.generateImages({
+          prompt: prompt,
+          steps,
+          n: 1,
+          conditionImage: existingImageUrl
+        });
+        imageUrl = response.images[0];
+        usedModel = response.model;
+      }
     } else {
       // Generate character image with S3 upload
       if (characterId) {
-        if (existingImageUrl) {
-          // Use FLUX.1 Kontext with conditional image
-          const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
+        if (existingImageUrl && postType !== 'image-flux') {
+          // Use FLUX.1 Kontext with conditional image (except for image-flux type)
+          const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style. Keep the face of the person in the original image. You can change everything else except the face. `;
           finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Kontext with condition image. Prompt:', finalPrompt);
           console.log('Character avatar URL for condition:', existingImageUrl);
@@ -130,7 +203,7 @@ export async function POST(request: NextRequest) {
           );
           usedModel = 'black-forest-labs/FLUX.1-kontext-dev';
         } else {
-          // Generate initial image without conditional image
+          // Generate initial image without conditional image (for image-flux type or when no existing image)
           const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
           finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Dev for initial image. Prompt:', finalPrompt);
@@ -144,7 +217,7 @@ export async function POST(request: NextRequest) {
         }
       } else {
         // Fallback to base64 image if no characterId provided
-        if (existingImageUrl) {
+        if (existingImageUrl && postType !== 'image-flux') {
           const defaultPrompt = `Create a new social media post image featuring ${characterName}, ${characterDescription}. The image should be on-topic and relevant to their expertise and personality. High quality, detailed, professional lighting, engaging composition that fits their brand and content style.`;
           finalPrompt = defaultPrompt;
           console.log('Using FLUX.1 Kontext without characterId. Prompt:', finalPrompt);
@@ -181,7 +254,7 @@ export async function POST(request: NextRequest) {
     let post = null;
     try {
       console.log('Attempting to save post to database:', {
-        type: 'image',
+        type: postType,
         imageUrl,
         title: postPrompt || prompt || `Generated image of ${characterName}`,
         description: `Generated using ${usedModel}`,
@@ -193,7 +266,7 @@ export async function POST(request: NextRequest) {
       // Note: This will work after running prisma db push
       post = await prisma.post.create({
         data: {
-          type: 'image',
+          type: postType,
           imageUrl,
           title: postPrompt || prompt || `Generated image of ${characterName}`,
           description: `Generated using ${usedModel}`,
@@ -224,23 +297,52 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Image generation API error:', error);
+    console.error('=== Image Generation API Error ===');
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('Full error object:', error);
     
     // Provide more specific error messages
     let errorMessage = 'Failed to generate image';
+    let statusCode = 400;
+    
     if (error instanceof Error) {
-      if (error.message.includes('FLUX.1 Kontext failed')) {
+      if (error.message.includes('rate_limit') || error.message.includes('429')) {
+        errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+        statusCode = 429;
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again.';
+        statusCode = 408;
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+        statusCode = 503;
+      } else if (error.message.includes('500')) {
+        errorMessage = 'Image generation service temporarily unavailable. Please try again.';
+        statusCode = 500;
+      } else if (error.message.includes('insufficient_quota')) {
+        errorMessage = 'Insufficient quota. Please check your Together AI account.';
+        statusCode = 402;
+      } else if (error.message.includes('invalid_api_key')) {
+        errorMessage = 'Invalid API key. Please check your configuration.';
+        statusCode = 401;
+      } else if (error.message.includes('FLUX.1 Kontext failed')) {
         errorMessage = 'Image generation failed, but fallback was attempted';
       } else if (error.message.includes('Invalid image format')) {
         errorMessage = 'Invalid condition image format provided';
       } else if (error.message.includes('No images generated')) {
         errorMessage = 'No images were generated by the AI model';
+      } else {
+        // Include the original error message for debugging
+        errorMessage = `Image generation failed: ${error.message}`;
       }
     }
     
+    console.error('Returning error response:', { errorMessage, statusCode });
+    
     return NextResponse.json(
       { error: errorMessage },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 } 

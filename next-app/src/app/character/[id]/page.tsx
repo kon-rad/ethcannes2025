@@ -56,7 +56,7 @@ export default function CharacterManagement() {
   const [wldPriceUSD, setWldPriceUSD] = useState<number | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const [autoPosting, setAutoPosting] = useState(false)
-  const [postType, setPostType] = useState<'text-long' | 'text-short' | 'image' | 'video'>('image')
+  const [postType, setPostType] = useState<'text-long' | 'text-short' | 'image' | 'image-flux' | 'video'>('image')
   const [searchQuery, setSearchQuery] = useState('')
   const [testingTopics, setTestingTopics] = useState(false)
   const [topicResults, setTopicResults] = useState<string[]>([])
@@ -148,6 +148,7 @@ export default function CharacterManagement() {
           characterName: character.name,
           characterDescription: character.description,
           postPrompt: imagePrompt || undefined, // Rename to postPrompt to be more specific
+          postType: postType, // Pass the post type to the backend
           existingImageUrl: character.imageUrl || undefined,
           userId: user.id,
           useCurrentState: true // Flag to indicate we want to use current state search results
@@ -688,7 +689,7 @@ export default function CharacterManagement() {
                   <label className="block text-sm font-medium text-[#1F2937] mb-3">
                     Post Type
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     <button
                       type="button"
                       onClick={() => setPostType('text-long')}
@@ -720,7 +721,18 @@ export default function CharacterManagement() {
                           : 'bg-white text-[#1F2937] border border-[#9CA3AF]/30 hover:bg-purple-50 hover:border-purple-300'
                       }`}
                     >
-                      Image
+                      Image (Kontext)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPostType('image-flux')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform ${
+                        postType === 'image-flux'
+                          ? 'bg-purple-600 text-white shadow-inner scale-95'
+                          : 'bg-white text-[#1F2937] border border-[#9CA3AF]/30 hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                    >
+                      Image (Flux)
                     </button>
                     <button
                       type="button"
